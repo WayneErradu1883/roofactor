@@ -1,65 +1,143 @@
-import Image from "next/image";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { NavHeader } from "@/components/NavHeader";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { prisma } from "@/lib/db";
+import Link from "next/link";
 
-export default function Home() {
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const [estimates, thisMonth, totalArea] = await Promise.all([
+    prisma.estimate.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+    prisma.estimate.count({
+      where: {
+        userId: session.user.id,
+        createdAt: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        },
+      },
+    }),
+    prisma.estimate.aggregate({
+      where: { userId: session.user.id },
+      _sum: { surfaceAreaM2: true },
+      _count: true,
+    }),
+  ]);
+
+  const totalEstimates = totalArea._count;
+  const totalM2 = totalArea._sum.surfaceAreaM2 ?? 0;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <NavHeader />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <p className="text-muted-foreground">
+              Welcome back, {session.user.name}
+            </p>
+          </div>
+          <Link href="/estimate">
+            <Button>New Estimate</Button>
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Estimates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{totalEstimates}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                This Month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{thisMonth}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Area Measured
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {totalM2.toLocaleString("en-ZA", { maximumFractionDigits: 0 })} m&sup2;
+              </p>
+            </CardContent>
+          </Card>
         </div>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Recent Estimates</CardTitle>
+            <CardDescription>
+              Your latest roof measurements and quotes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {estimates.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No estimates yet. Click &quot;New Estimate&quot; to get started.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 pr-4">Address</th>
+                      <th className="pb-2 pr-4">Surface Area</th>
+                      <th className="pb-2 pr-4">Cost</th>
+                      <th className="pb-2">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {estimates.map((est) => (
+                      <tr key={est.id} className="border-b last:border-0">
+                        <td className="py-2 pr-4">{est.address}</td>
+                        <td className="py-2 pr-4">
+                          {est.surfaceAreaM2.toFixed(1)} m²
+                        </td>
+                        <td className="py-2 pr-4">
+                          {est.totalCost
+                            ? `R${est.totalCost.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : "—"}
+                        </td>
+                        <td className="py-2">
+                          {new Date(est.createdAt).toLocaleDateString("en-ZA")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
-    </div>
+    </>
   );
 }

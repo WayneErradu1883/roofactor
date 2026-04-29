@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ESTIMATOR
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  password  String
+  role      Role       @default(ESTIMATOR)
+  estimates Estimate[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Estimate {
+  id               String   @id @default(cuid())
+  address          String
+  latitude         Float
+  longitude        Float
+  footprintGeoJSON String   @db.Text
+  footprintAreaM2  Float
+  pitchDegrees     Float
+  surfaceAreaM2    Float
+  ratePerM2        Float?
+  totalCost        Float?
+  confidenceScore  Float?
+  sourcesUsed      String
+  notes            String?  @db.Text
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
