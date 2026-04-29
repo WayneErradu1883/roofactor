@@ -11,8 +11,14 @@ export interface PolygonData {
   areaM2: number;
 }
 
+export interface ZoneData {
+  id: string;
+  latlngs: [number, number][];
+  areaM2: number;
+}
+
 interface PolygonEditorProps {
-  onPolygonChange: (polygon: PolygonData | null) => void;
+  onZonesChange: (zones: ZoneData[]) => void;
   initialPolygon?: [number, number][];
   sourceLabel?: string;
   color?: string;
@@ -22,30 +28,38 @@ function calcGeodesicArea(latlngs: L.LatLng[]): number {
   return L.GeometryUtil.geodesicArea(latlngs);
 }
 
+let zoneCounter = 0;
+
 export default function PolygonEditor({
-  onPolygonChange,
+  onZonesChange,
   initialPolygon,
   sourceLabel,
-  color = "#3388ff",
+  color = "#22c55e",
 }: PolygonEditorProps) {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const initializedRef = useRef(false);
 
-  const emitChange = useCallback(
-    (layer: L.Polygon | null) => {
-      if (!layer) {
-        onPolygonChange(null);
-        return;
-      }
-      const latlngs = (layer.getLatLngs()[0] as L.LatLng[]).map(
-        (ll) => [ll.lat, ll.lng] as [number, number]
-      );
-      const areaM2 = calcGeodesicArea(layer.getLatLngs()[0] as L.LatLng[]);
-      onPolygonChange({ latlngs, areaM2 });
+  const emitAllZones = useCallback(
+    (drawnItems: L.FeatureGroup) => {
+      const zones: ZoneData[] = [];
+      drawnItems.eachLayer((layer) => {
+        if (layer instanceof L.Polygon) {
+          const latlngs = (layer.getLatLngs()[0] as L.LatLng[]).map(
+            (ll) => [ll.lat, ll.lng] as [number, number]
+          );
+          const areaM2 = calcGeodesicArea(layer.getLatLngs()[0] as L.LatLng[]);
+          const id =
+            (layer as L.Polygon & { _zoneId?: string })._zoneId ||
+            `zone-${++zoneCounter}`;
+          (layer as L.Polygon & { _zoneId?: string })._zoneId = id;
+          zones.push({ id, latlngs, areaM2 });
+        }
+      });
+      onZonesChange(zones);
     },
-    [onPolygonChange]
+    [onZonesChange]
   );
 
   useEffect(() => {
@@ -56,20 +70,27 @@ export default function PolygonEditor({
     map.addLayer(drawnItems);
     drawnItemsRef.current = drawnItems;
 
-    // If there's an initial polygon, add it
+    // If there's an initial polygon, add it as zone 1
     if (initialPolygon && initialPolygon.length >= 3) {
       const polygon = L.polygon(initialPolygon, {
         color,
         fillOpacity: 0.3,
         weight: 2,
-      });
+      }) as L.Polygon & { _zoneId?: string };
+      polygon._zoneId = `zone-${++zoneCounter}`;
       if (sourceLabel) {
-        polygon.bindTooltip(sourceLabel, { permanent: true, direction: "center" });
+        polygon.bindTooltip(`Zone 1 (${sourceLabel})`, {
+          permanent: true,
+          direction: "center",
+        });
+      } else {
+        polygon.bindTooltip("Zone 1", {
+          permanent: true,
+          direction: "center",
+        });
       }
       drawnItems.addLayer(polygon);
-
-      // Emit the initial area
-      setTimeout(() => emitChange(polygon), 100);
+      setTimeout(() => emitAllZones(drawnItems), 100);
     }
 
     const drawControl = new L.Control.Draw({
@@ -96,30 +117,30 @@ export default function PolygonEditor({
 
     map.on(L.Draw.Event.CREATED, (e: L.LeafletEvent) => {
       const event = e as L.DrawEvents.Created;
-      // Clear previous polygons — one polygon at a time
-      drawnItems.clearLayers();
-      drawnItems.addLayer(event.layer);
-      emitChange(event.layer as L.Polygon);
+      const layer = event.layer as L.Polygon & { _zoneId?: string };
+      layer._zoneId = `zone-${++zoneCounter}`;
+      const zoneNum = drawnItems.getLayers().length + 1;
+      layer.bindTooltip(`Zone ${zoneNum}`, {
+        permanent: true,
+        direction: "center",
+      });
+      drawnItems.addLayer(layer);
+      emitAllZones(drawnItems);
     });
 
     map.on(L.Draw.Event.EDITED, () => {
-      const layers = drawnItems.getLayers();
-      if (layers.length > 0) {
-        emitChange(layers[0] as L.Polygon);
-      }
+      emitAllZones(drawnItems);
     });
 
     map.on(L.Draw.Event.DELETED, () => {
-      if (drawnItems.getLayers().length === 0) {
-        emitChange(null);
-      }
+      emitAllZones(drawnItems);
     });
 
     return () => {
       map.removeControl(drawControl);
       map.removeLayer(drawnItems);
     };
-  }, [map, initialPolygon, sourceLabel, color, emitChange]);
+  }, [map, initialPolygon, sourceLabel, color, emitAllZones]);
 
   return null;
 }

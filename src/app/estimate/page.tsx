@@ -6,13 +6,14 @@ import { NavHeader } from "@/components/NavHeader";
 import AddressSearch, {
   type GeocodedAddress,
 } from "@/components/estimate/AddressSearch";
-import PitchSelector from "@/components/estimate/PitchSelector";
 import AreaResult from "@/components/estimate/AreaResult";
 import QuoteCalc from "@/components/estimate/QuoteCalc";
+import ZoneList, { type ZonePitch } from "@/components/estimate/ZoneList";
+import SourceComparison from "@/components/estimate/SourceComparison";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { calculateSurfaceArea } from "@/lib/calc/pitch";
-import type { PolygonData } from "@/components/map/PolygonEditor";
+import type { ZoneData } from "@/components/map/PolygonEditor";
 import Link from "next/link";
 
 // Dynamic imports for Leaflet (no SSR)
@@ -65,25 +66,36 @@ export default function EstimatePage() {
   const [mapZoom, setMapZoom] = useState(SA_ZOOM);
   const [footprints, setFootprints] = useState<FootprintResponse | null>(null);
   const [footprintLoading, setFootprintLoading] = useState(false);
-  const [polygon, setPolygon] = useState<PolygonData | null>(null);
-  const [pitchDegrees, setPitchDegrees] = useState(22.5);
+  const [zones, setZones] = useState<ZoneData[]>([]);
+  const [zonePitches, setZonePitches] = useState<ZonePitch[]>([]);
   const [ratePerM2, setRatePerM2] = useState(150);
   const [showMicrosoft, setShowMicrosoft] = useState(true);
   const [showOSM, setShowOSM] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
 
-  const surfaceAreaM2 = useMemo(() => {
-    if (!polygon) return null;
-    return calculateSurfaceArea(polygon.areaM2, pitchDegrees);
-  }, [polygon, pitchDegrees]);
+  // Calculate totals across all zones
+  const totals = useMemo(() => {
+    if (zones.length === 0) return { footprint: null, surface: null };
+    const footprint = zones.reduce((sum, z) => sum + z.areaM2, 0);
+    const surface = zones.reduce((sum, z) => {
+      const pitch =
+        zonePitches.find((p) => p.zoneId === z.id)?.pitchDegrees ?? 22.5;
+      return sum + calculateSurfaceArea(z.areaM2, pitch);
+    }, 0);
+    return { footprint, surface };
+  }, [zones, zonePitches]);
 
   const handleAddressFound = useCallback(async (result: GeocodedAddress) => {
     setGeocoded(result);
     setMapCenter([result.lat, result.lng]);
     setMapZoom(BUILDING_ZOOM);
-    setPolygon(null);
+    setZones([]);
+    setZonePitches([]);
     setSaved(false);
+    setNotes("");
 
     // Fetch building footprints
     setFootprintLoading(true);
@@ -96,30 +108,96 @@ export default function EstimatePage() {
         setFootprints(data);
       }
     } catch {
-      // Footprints are optional — user can still draw manually
+      // Footprints are optional
     } finally {
       setFootprintLoading(false);
     }
   }, []);
 
-  const handlePolygonChange = useCallback((data: PolygonData | null) => {
-    setPolygon(data);
-    setSaved(false);
-  }, []);
+  const handleZonesChange = useCallback(
+    (newZones: ZoneData[]) => {
+      setZones(newZones);
+      setSaved(false);
+
+      // Add default pitch for any new zones
+      setZonePitches((prev) => {
+        const updated = [...prev];
+        for (const zone of newZones) {
+          if (!updated.find((p) => p.zoneId === zone.id)) {
+            updated.push({ zoneId: zone.id, pitchDegrees: 22.5 });
+          }
+        }
+        // Remove pitches for deleted zones
+        return updated.filter((p) =>
+          newZones.some((z) => z.id === p.zoneId)
+        );
+      });
+    },
+    []
+  );
+
+  const handlePitchChange = useCallback(
+    (zoneId: string, pitchDegrees: number) => {
+      setZonePitches((prev) =>
+        prev.map((p) =>
+          p.zoneId === zoneId ? { ...p, pitchDegrees } : p
+        )
+      );
+      setSaved(false);
+    },
+    []
+  );
+
+  const handleApplyPitchToAll = useCallback(
+    (pitchDegrees: number) => {
+      setZonePitches((prev) =>
+        prev.map((p) => ({ ...p, pitchDegrees }))
+      );
+      setSaved(false);
+    },
+    []
+  );
+
+  const [preferredSource, setPreferredSource] = useState<"microsoft" | "osm" | null>(null);
 
   // Determine which initial polygon to load into the editor
   const bestFootprint = useMemo(() => {
     if (!footprints) return undefined;
-    // Prefer Microsoft (usually more accurate), fall back to OSM
+    if (preferredSource === "osm" && footprints.osm) return footprints.osm.coordinates;
+    if (preferredSource === "microsoft" && footprints.microsoft) return footprints.microsoft.coordinates;
+    // Default: prefer Microsoft, fall back to OSM
     const source = footprints.microsoft || footprints.osm;
     return source?.coordinates;
-  }, [footprints]);
+  }, [footprints, preferredSource]);
 
   async function handleSave() {
-    if (!geocoded || !polygon || surfaceAreaM2 === null) return;
+    if (!geocoded || zones.length === 0 || totals.surface === null) return;
 
     setSaving(true);
     try {
+      // Build multi-zone GeoJSON
+      const geoJSON = {
+        type: "FeatureCollection",
+        features: zones.map((z, idx) => ({
+          type: "Feature",
+          properties: {
+            zone: idx + 1,
+            pitchDegrees:
+              zonePitches.find((p) => p.zoneId === z.id)?.pitchDegrees ?? 22.5,
+            footprintAreaM2: z.areaM2,
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [z.latlngs.map((ll) => [ll[1], ll[0]])],
+          },
+        })),
+      };
+
+      // Use the average pitch for the DB record (individual zones stored in GeoJSON)
+      const avgPitch =
+        zonePitches.reduce((sum, p) => sum + p.pitchDegrees, 0) /
+        (zonePitches.length || 1);
+
       const res = await fetch("/api/estimate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,17 +205,12 @@ export default function EstimatePage() {
           address: geocoded.formatted_address,
           latitude: geocoded.lat,
           longitude: geocoded.lng,
-          footprintGeoJSON: JSON.stringify({
-            type: "Polygon",
-            coordinates: [
-              polygon.latlngs.map((ll) => [ll[1], ll[0]]),
-            ],
-          }),
-          footprintAreaM2: polygon.areaM2,
-          pitchDegrees,
-          surfaceAreaM2,
+          footprintGeoJSON: JSON.stringify(geoJSON),
+          footprintAreaM2: totals.footprint,
+          pitchDegrees: Math.round(avgPitch * 10) / 10,
+          surfaceAreaM2: totals.surface,
           ratePerM2,
-          totalCost: surfaceAreaM2 * ratePerM2,
+          totalCost: totals.surface * ratePerM2,
           confidenceScore:
             footprints?.confidence === "high"
               ? 0.95
@@ -145,6 +218,7 @@ export default function EstimatePage() {
                 ? 0.75
                 : 0.5,
           sourcesUsed: JSON.stringify(footprints?.sourcesAvailable || []),
+          notes: notes || null,
         }),
       });
 
@@ -163,7 +237,7 @@ export default function EstimatePage() {
       <NavHeader />
       <main className="flex flex-1 flex-col lg:flex-row">
         {/* Left panel: controls */}
-        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-96">
+        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">New Estimate</h2>
             <Link href="/">
@@ -191,84 +265,80 @@ export default function EstimatePage() {
           )}
 
           {footprints && !footprintLoading && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Data Sources</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {footprints.microsoft && (
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={showMicrosoft}
-                      onChange={(e) => setShowMicrosoft(e.target.checked)}
-                    />
-                    <span
-                      className="inline-block h-3 w-3 rounded-sm"
-                      style={{ backgroundColor: "#ff6600" }}
-                    />
-                    Microsoft: {footprints.microsoft.areaM2.toFixed(1)} m²
-                  </label>
-                )}
-                {footprints.osm && (
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={showOSM}
-                      onChange={(e) => setShowOSM(e.target.checked)}
-                    />
-                    <span
-                      className="inline-block h-3 w-3 rounded-sm"
-                      style={{ backgroundColor: "#0066ff" }}
-                    />
-                    OSM: {footprints.osm.areaM2.toFixed(1)} m²
-                  </label>
-                )}
-                {!footprints.microsoft && !footprints.osm && (
-                  <p className="text-muted-foreground">
-                    No building footprints found. Draw the roof outline manually
-                    using the polygon tool on the map.
-                  </p>
-                )}
-                {footprints.discrepancy !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Source discrepancy: {footprints.discrepancy.toFixed(1)}%
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <SourceComparison
+              microsoft={footprints.microsoft}
+              osm={footprints.osm}
+              confidence={footprints.confidence}
+              discrepancy={footprints.discrepancy}
+              showMicrosoft={showMicrosoft}
+              showOSM={showOSM}
+              onToggleMicrosoft={setShowMicrosoft}
+              onToggleOSM={setShowOSM}
+              onSelectSource={(source) => {
+                setPreferredSource(source);
+                setZones([]);
+                setZonePitches([]);
+                setEditorKey((k) => k + 1);
+              }}
+            />
           )}
 
           {geocoded && (
             <>
-              <PitchSelector value={pitchDegrees} onChange={setPitchDegrees} />
+              {zones.length === 0 && (
+                <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  {bestFootprint
+                    ? "Auto-detected roof outline loaded. Draw additional zones or adjust the existing one."
+                    : "Use the polygon tool on the map to draw the roof outline. Draw multiple polygons for complex roofs with different pitches."}
+                </div>
+              )}
+
+              <ZoneList
+                zones={zones}
+                zonePitches={zonePitches}
+                onPitchChange={handlePitchChange}
+                onApplyPitchToAll={handleApplyPitchToAll}
+              />
 
               <AreaResult
-                footprintAreaM2={polygon?.areaM2 ?? null}
-                surfaceAreaM2={surfaceAreaM2}
-                pitchDegrees={pitchDegrees}
+                totalFootprintM2={totals.footprint}
+                totalSurfaceM2={totals.surface}
+                zoneCount={zones.length}
                 confidence={footprints?.confidence ?? null}
                 discrepancy={footprints?.discrepancy ?? null}
                 sourcesUsed={footprints?.sourcesAvailable ?? []}
               />
 
               <QuoteCalc
-                surfaceAreaM2={surfaceAreaM2}
+                surfaceAreaM2={totals.surface}
                 onRateChange={setRatePerM2}
               />
 
-              {polygon && surfaceAreaM2 !== null && (
-                <Button
-                  className="w-full"
-                  onClick={handleSave}
-                  disabled={saving || saved}
-                >
-                  {saved
-                    ? "Saved!"
-                    : saving
-                      ? "Saving..."
-                      : "Save Estimate"}
-                </Button>
+              {zones.length > 0 && totals.surface !== null && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes (optional)</Label>
+                    <textarea
+                      id="notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Site observations, access notes, etc."
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={handleSave}
+                    disabled={saving || saved}
+                  >
+                    {saved
+                      ? "Saved!"
+                      : saving
+                        ? "Saving..."
+                        : "Save Estimate"}
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -279,7 +349,7 @@ export default function EstimatePage() {
           <MapView
             center={mapCenter}
             zoom={mapZoom}
-            googleApiKey={undefined} // Will use keyless Google tiles
+            googleApiKey={undefined}
           >
             {geocoded && (
               <FlyToComponent
@@ -308,10 +378,11 @@ export default function EstimatePage() {
               />
             )}
 
-            {/* Editable polygon */}
+            {/* Multi-zone polygon editor */}
             {geocoded && (
               <PolygonEditor
-                onPolygonChange={handlePolygonChange}
+                key={editorKey}
+                onZonesChange={handleZonesChange}
                 initialPolygon={bestFootprint}
                 sourceLabel={
                   footprints?.microsoft

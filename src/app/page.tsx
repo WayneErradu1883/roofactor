@@ -116,7 +116,11 @@ export default async function DashboardPage() {
                   </thead>
                   <tbody>
                     {estimates.map((est) => (
-                      <tr key={est.id} className="border-b last:border-0">
+                      <tr
+                        key={est.id}
+                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => window.location.href = `/estimate/${est.id}`}
+                      >
                         <td className="py-2 pr-4">{est.address}</td>
                         <td className="py-2 pr-4">
                           {est.surfaceAreaM2.toFixed(1)} m²

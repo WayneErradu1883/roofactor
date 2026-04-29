@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/card";
 
 interface AreaResultProps {
-  footprintAreaM2: number | null;
-  surfaceAreaM2: number | null;
-  pitchDegrees: number;
+  totalFootprintM2: number | null;
+  totalSurfaceM2: number | null;
+  zoneCount: number;
   confidence: "high" | "medium" | "low" | null;
   discrepancy: number | null;
   sourcesUsed: string[];
@@ -29,14 +29,14 @@ const confidenceLabels = {
 };
 
 export default function AreaResult({
-  footprintAreaM2,
-  surfaceAreaM2,
-  pitchDegrees,
+  totalFootprintM2,
+  totalSurfaceM2,
+  zoneCount,
   confidence,
   discrepancy,
   sourcesUsed,
 }: AreaResultProps) {
-  if (footprintAreaM2 === null) {
+  if (totalFootprintM2 === null) {
     return (
       <Card>
         <CardContent className="py-6 text-center text-muted-foreground">
@@ -54,18 +54,24 @@ export default function AreaResult({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Footprint (2D)</p>
-            <p className="text-2xl font-bold">{footprintAreaM2.toFixed(1)} m²</p>
+            <p className="text-sm text-muted-foreground">Total Footprint (2D)</p>
+            <p className="text-2xl font-bold">{totalFootprintM2.toFixed(1)} m²</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
-              Surface Area ({pitchDegrees}&deg; pitch)
+              Total Surface Area
             </p>
             <p className="text-2xl font-bold">
-              {surfaceAreaM2 !== null ? surfaceAreaM2.toFixed(1) : "—"} m²
+              {totalSurfaceM2 !== null ? totalSurfaceM2.toFixed(1) : "—"} m²
             </p>
           </div>
         </div>
+
+        {zoneCount > 1 && (
+          <p className="text-xs text-muted-foreground">
+            Calculated across {zoneCount} roof zones with individual pitch angles.
+          </p>
+        )}
 
         {confidence && (
           <div

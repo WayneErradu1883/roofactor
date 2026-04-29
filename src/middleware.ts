@@ -1,13 +1,19 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname !== "/login") {
+export function middleware(req: NextRequest) {
+  // Check for NextAuth session token
+  const token =
+    req.cookies.get("authjs.session-token") ||
+    req.cookies.get("__Secure-authjs.session-token");
+
+  if (!token && req.nextUrl.pathname !== "/login") {
     const loginUrl = new URL("/login", req.nextUrl.origin);
     return NextResponse.redirect(loginUrl);
   }
+
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
