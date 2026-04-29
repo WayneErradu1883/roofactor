@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { NavHeader } from "@/components/NavHeader";
 import AddressSearch, {
@@ -232,12 +232,26 @@ export default function EstimatePage() {
     }
   }
 
+  // Ctrl+S to save
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (zones.length > 0 && totals.surface !== null && !saving && !saved) {
+          handleSave();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   return (
     <>
       <NavHeader />
-      <main className="flex flex-1 flex-col lg:flex-row">
+      <main className="flex flex-1 flex-col-reverse lg:flex-row">
         {/* Left panel: controls */}
-        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px]">
+        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px] lg:max-h-[calc(100vh-3.5rem)]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">New Estimate</h2>
             <Link href="/">
@@ -345,7 +359,8 @@ export default function EstimatePage() {
         </div>
 
         {/* Right panel: map */}
-        <div className="relative flex-1" style={{ minHeight: "500px" }}>
+        {/* Right panel: map */}
+        <div className="relative flex-1 min-h-[50vh] lg:min-h-0">
           <MapView
             center={mapCenter}
             zoom={mapZoom}

@@ -12,7 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { pitchMultiplier } from "@/lib/calc/pitch";
+import PdfDownload from "@/components/estimate/PdfDownload";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const MapView = dynamic(() => import("@/components/map/MapView"), {
   ssr: false,
@@ -66,6 +68,7 @@ interface GeoJSONFeature {
 export default function EstimateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -167,9 +170,9 @@ export default function EstimateDetailPage() {
   return (
     <>
       <NavHeader />
-      <main className="flex flex-1 flex-col lg:flex-row">
+      <main className="flex flex-1 flex-col-reverse lg:flex-row">
         {/* Left panel: details */}
-        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px]">
+        <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px] lg:max-h-[calc(100vh-3.5rem)]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Estimate Details</h2>
             <Link href="/">
@@ -324,6 +327,11 @@ export default function EstimateDetailPage() {
             </Card>
           )}
 
+          <PdfDownload
+            estimate={estimate}
+            estimatorName={session?.user?.name ?? "Unknown"}
+          />
+
           <Button
             variant="destructive"
             size="sm"
@@ -336,7 +344,7 @@ export default function EstimateDetailPage() {
         </div>
 
         {/* Right panel: map */}
-        <div className="relative flex-1" style={{ minHeight: "500px" }}>
+        <div className="relative flex-1 min-h-[50vh] lg:min-h-0">
           <MapView
             center={[estimate.latitude, estimate.longitude]}
             zoom={19}

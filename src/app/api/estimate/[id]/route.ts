@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 export async function GET(
   _req: Request,
@@ -44,5 +45,15 @@ export async function DELETE(
   }
 
   await prisma.estimate.delete({ where: { id } });
+
+  await logAudit({
+    action: "estimate.deleted",
+    entityType: "estimate",
+    entityId: id,
+    details: estimate.address,
+    userId: session.user.id,
+    userName: session.user.name,
+  });
+
   return NextResponse.json({ deleted: true });
 }

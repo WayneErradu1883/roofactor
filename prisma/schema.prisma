@@ -44,3 +44,17 @@ model Estimate {
 
   @@index([userId])
 }
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String
+  entityId   String?
+  details    String?  @db.Text
+  userId     String
+  userName   String
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

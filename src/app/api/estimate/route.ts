@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -55,6 +56,15 @@ export async function POST(req: Request) {
       notes: notes ?? null,
       userId: session.user.id,
     },
+  });
+
+  await logAudit({
+    action: "estimate.created",
+    entityType: "estimate",
+    entityId: estimate.id,
+    details: `${address} — ${surfaceAreaM2.toFixed(1)} m²`,
+    userId: session.user.id,
+    userName: session.user.name,
   });
 
   return NextResponse.json(estimate, { status: 201 });

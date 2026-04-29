@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import EstimateTable from "@/components/estimate/EstimateTable";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
@@ -20,7 +20,13 @@ export default async function DashboardPage() {
     prisma.estimate.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
-      take: 10,
+      select: {
+        id: true,
+        address: true,
+        surfaceAreaM2: true,
+        totalCost: true,
+        createdAt: true,
+      },
     }),
     prisma.estimate.count({
       where: {
@@ -39,6 +45,12 @@ export default async function DashboardPage() {
 
   const totalEstimates = totalArea._count;
   const totalM2 = totalArea._sum.surfaceAreaM2 ?? 0;
+
+  // Serialize dates for client component
+  const serializedEstimates = estimates.map((e) => ({
+    ...e,
+    createdAt: e.createdAt.toISOString(),
+  }));
 
   return (
     <>
@@ -91,56 +103,7 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Recent Estimates</CardTitle>
-            <CardDescription>
-              Your latest roof measurements and quotes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {estimates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No estimates yet. Click &quot;New Estimate&quot; to get started.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 pr-4">Address</th>
-                      <th className="pb-2 pr-4">Surface Area</th>
-                      <th className="pb-2 pr-4">Cost</th>
-                      <th className="pb-2">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {estimates.map((est) => (
-                      <tr
-                        key={est.id}
-                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => window.location.href = `/estimate/${est.id}`}
-                      >
-                        <td className="py-2 pr-4">{est.address}</td>
-                        <td className="py-2 pr-4">
-                          {est.surfaceAreaM2.toFixed(1)} m²
-                        </td>
-                        <td className="py-2 pr-4">
-                          {est.totalCost
-                            ? `R${est.totalCost.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : "—"}
-                        </td>
-                        <td className="py-2">
-                          {new Date(est.createdAt).toLocaleDateString("en-ZA")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <EstimateTable estimates={serializedEstimates} />
       </main>
     </>
   );

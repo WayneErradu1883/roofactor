@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: Request) {
   const { email, name, password } = await req.json();
@@ -37,6 +38,15 @@ export async function POST(req: Request) {
       password: hashedPassword,
       role: userCount === 0 ? "ADMIN" : "ESTIMATOR",
     },
+  });
+
+  await logAudit({
+    action: "user.registered",
+    entityType: "user",
+    entityId: user.id,
+    details: `${name} (${email}) — ${user.role}`,
+    userId: user.id,
+    userName: name,
   });
 
   return NextResponse.json(
