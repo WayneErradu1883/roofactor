@@ -62,20 +62,39 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Roofactor</CardTitle>
-          <CardDescription>
-            {isRegister
-              ? "Create your account"
-              : "Sign in to your account"}
-          </CardDescription>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 px-4">
+      <Card className="w-full max-w-sm shadow-xl shadow-primary/5 ring-1 ring-border/60">
+        <CardHeader className="space-y-3 pb-2 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-xl bg-primary/10">
+            <svg
+              className="size-7 text-primary"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 21h18" />
+              <path d="M5 21V7l7-4 7 4v14" />
+              <path d="M9 21v-6h6v6" />
+            </svg>
+          </div>
+          <div>
+            <CardTitle className="text-xl font-bold tracking-tight">
+              Roofactor
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {isRegister
+                ? "Create your account"
+                : "Sign in to your account"}
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
@@ -83,10 +102,11 @@ export default function LoginPage() {
                   type="text"
                   required={isRegister}
                   placeholder="Your name"
+                  className="h-10"
                 />
               </div>
             )}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -94,9 +114,10 @@ export default function LoginPage() {
                 type="email"
                 required
                 placeholder="you@example.com"
+                className="h-10"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -105,6 +126,7 @@ export default function LoginPage() {
                 required
                 minLength={8}
                 placeholder="Min. 8 characters"
+                className="h-10"
               />
             </div>
 
@@ -112,7 +134,11 @@ export default function LoginPage() {
               <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="h-10 w-full text-sm font-semibold"
+              disabled={loading}
+            >
               {loading
                 ? "Please wait..."
                 : isRegister
@@ -121,7 +147,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-muted-foreground">
+          <div className="mt-5 text-center text-sm text-muted-foreground">
             {isRegister ? "Already have an account?" : "No account yet?"}{" "}
             <button
               type="button"
@@ -129,7 +155,7 @@ export default function LoginPage() {
                 setIsRegister(!isRegister);
                 setError("");
               }}
-              className="text-primary underline-offset-4 hover:underline"
+              className="font-medium text-primary underline-offset-4 hover:underline"
             >
               {isRegister ? "Sign in" : "Register"}
             </button>
