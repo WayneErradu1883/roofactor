@@ -15,6 +15,12 @@ export function NavHeader() {
         </Link>
         {session?.user && (
           <div className="flex items-center gap-2 sm:gap-4">
+            <Link
+              href="/help"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+            >
+              Help
+            </Link>
             {session.user.role === "ADMIN" && (
               <Link
                 href="/admin/activity"
