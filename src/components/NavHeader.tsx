@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { RoofIcon } from "@/components/RoofIcon";
 import Link from "next/link";
 
 export function NavHeader() {
@@ -10,7 +11,8 @@ export function NavHeader() {
   return (
     <header className="border-b bg-card sticky top-0 z-50">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold hover:opacity-80 transition-opacity">
+          <RoofIcon className="size-5 text-primary" />
           Roofactor
         </Link>
         {session?.user && (
@@ -43,9 +45,12 @@ export function NavHeader() {
                 </Link>
               </>
             )}
-            <span className="hidden sm:inline text-sm text-muted-foreground">
+            <Link
+              href="/profile"
+              className="hidden sm:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               {session.user.name}
-            </span>
+            </Link>
             <Button
               variant="outline"
               size="sm"

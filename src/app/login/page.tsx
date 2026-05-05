@@ -70,7 +70,10 @@ export default function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-xl font-bold tracking-tight">
-              Roofactor
+              Roofactor{" "}
+              <span className="text-sm font-normal italic text-muted-foreground">
+                for Nomiplex
+              </span>
             </CardTitle>
             <CardDescription className="mt-1">
               Sign in to your account
