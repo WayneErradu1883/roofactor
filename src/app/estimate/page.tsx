@@ -160,16 +160,6 @@ export default function EstimatePage() {
 
   const [preferredSource, setPreferredSource] = useState<"microsoft" | "osm" | null>(null);
 
-  // Determine which initial polygon to load into the editor
-  const bestFootprint = useMemo(() => {
-    if (!footprints) return undefined;
-    if (preferredSource === "osm" && footprints.osm) return footprints.osm.coordinates;
-    if (preferredSource === "microsoft" && footprints.microsoft) return footprints.microsoft.coordinates;
-    // Default: prefer Microsoft, fall back to OSM
-    const source = footprints.microsoft || footprints.osm;
-    return source?.coordinates;
-  }, [footprints, preferredSource]);
-
   async function handleSave() {
     if (!geocoded || zones.length === 0 || totals.surface === null) return;
 
@@ -301,9 +291,7 @@ export default function EstimatePage() {
             <>
               {zones.length === 0 && (
                 <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                  {bestFootprint
-                    ? "Auto-detected roof outline loaded. Draw additional zones or adjust the existing one."
-                    : "Use the polygon tool on the map to draw the roof outline. Draw multiple polygons for complex roofs with different pitches."}
+                  Use the polygon tool on the map to trace the roof outline. The orange/blue overlays show detected building footprints for reference. Draw multiple polygons for complex roofs with different pitches.
                 </div>
               )}
 
@@ -398,14 +386,6 @@ export default function EstimatePage() {
               <PolygonEditor
                 key={editorKey}
                 onZonesChange={handleZonesChange}
-                initialPolygon={bestFootprint}
-                sourceLabel={
-                  footprints?.microsoft
-                    ? "Microsoft"
-                    : footprints?.osm
-                      ? "OSM"
-                      : undefined
-                }
                 color="#22c55e"
               />
             )}
