@@ -16,7 +16,6 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,37 +27,26 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const name = formData.get("name") as string;
 
-    if (isRegister) {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Registration failed");
+      if (result?.error) {
+        setError("Invalid email or password");
         setLoading(false);
         return;
       }
-    }
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      setError("Invalid email or password");
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
       setLoading(false);
-      return;
     }
-
-    router.push("/");
-    router.refresh();
   }
 
   return (
@@ -85,27 +73,12 @@ export default function LoginPage() {
               Roofactor
             </CardTitle>
             <CardDescription className="mt-1">
-              {isRegister
-                ? "Create your account"
-                : "Sign in to your account"}
+              Sign in to your account
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegister && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required={isRegister}
-                  placeholder="Your name"
-                  className="h-10"
-                />
-              </div>
-            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -124,8 +97,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                minLength={8}
-                placeholder="Min. 8 characters"
+                placeholder="Enter your password"
                 className="h-10"
               />
             </div>
@@ -139,27 +111,9 @@ export default function LoginPage() {
               className="h-10 w-full text-sm font-semibold"
               disabled={loading}
             >
-              {loading
-                ? "Please wait..."
-                : isRegister
-                  ? "Create Account"
-                  : "Sign In"}
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
-          <div className="mt-5 text-center text-sm text-muted-foreground">
-            {isRegister ? "Already have an account?" : "No account yet?"}{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError("");
-              }}
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              {isRegister ? "Sign in" : "Register"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
