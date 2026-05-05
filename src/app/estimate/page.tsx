@@ -47,9 +47,18 @@ interface FootprintSource {
   source: string;
 }
 
+interface SolarPitchData {
+  avgPitchDegrees: number;
+  dominantPitchDegrees: number;
+  segments: { pitchDegrees: number; azimuthDegrees: number; areaM2: number }[];
+  totalRoofAreaM2: number;
+  imageryQuality: string;
+}
+
 interface FootprintResponse {
   microsoft: FootprintSource | null;
   osm: FootprintSource | null;
+  solarPitch: SolarPitchData | null;
   confidence: "high" | "medium" | "low";
   discrepancy: number | null;
   sourcesAvailable: string[];
@@ -75,6 +84,7 @@ export default function EstimatePage() {
   const [saved, setSaved] = useState(false);
   const [notes, setNotes] = useState("");
   const [editorKey, setEditorKey] = useState(0);
+  const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
 
   // Calculate totals across all zones
   const totals = useMemo(() => {
@@ -97,8 +107,9 @@ export default function EstimatePage() {
     setSaved(false);
     setNotes("");
 
-    // Fetch building footprints
+    // Fetch building footprints and solar pitch data
     setFootprintLoading(true);
+    setDetectedPitch(null);
     try {
       const res = await fetch(
         `/api/footprint?lat=${result.lat}&lng=${result.lng}`
@@ -106,6 +117,9 @@ export default function EstimatePage() {
       if (res.ok) {
         const data = await res.json();
         setFootprints(data);
+        if (data.solarPitch) {
+          setDetectedPitch(data.solarPitch.dominantPitchDegrees);
+        }
       }
     } catch {
       // Footprints are optional
@@ -119,12 +133,15 @@ export default function EstimatePage() {
       setZones(newZones);
       setSaved(false);
 
-      // Add default pitch for any new zones
+      // Add pitch for new zones — use detected pitch from Solar API if available
       setZonePitches((prev) => {
         const updated = [...prev];
         for (const zone of newZones) {
           if (!updated.find((p) => p.zoneId === zone.id)) {
-            updated.push({ zoneId: zone.id, pitchDegrees: 22.5 });
+            updated.push({
+              zoneId: zone.id,
+              pitchDegrees: detectedPitch ?? 22.5,
+            });
           }
         }
         // Remove pitches for deleted zones
@@ -133,7 +150,7 @@ export default function EstimatePage() {
         );
       });
     },
-    []
+    [detectedPitch]
   );
 
   const handlePitchChange = useCallback(
@@ -265,6 +282,19 @@ export default function EstimatePage() {
           {footprintLoading && (
             <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
               Searching for building footprints...
+            </div>
+          )}
+
+          {footprints?.solarPitch && !footprintLoading && (
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-sm">
+              <p className="font-medium text-primary">
+                Roof pitch auto-detected: {footprints.solarPitch.dominantPitchDegrees}&deg;
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {footprints.solarPitch.segments.length} segment{footprints.solarPitch.segments.length !== 1 ? "s" : ""} detected
+                via Google Solar API ({footprints.solarPitch.imageryQuality} quality).
+                Pitch will be applied automatically when you draw polygons.
+              </p>
             </div>
           )}
 

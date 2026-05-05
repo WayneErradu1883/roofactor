@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { fetchMicrosoftFootprints } from "@/lib/sources/microsoft";
 import { fetchOSMFootprints } from "@/lib/sources/osm";
+import { fetchGoogleSolarData } from "@/lib/sources/google-solar";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -20,10 +21,11 @@ export async function GET(req: Request) {
     );
   }
 
-  // Fetch from both sources in parallel
-  const [msFootprints, osmFootprints] = await Promise.all([
+  // Fetch from all sources in parallel
+  const [msFootprints, osmFootprints, solarData] = await Promise.all([
     fetchMicrosoftFootprints(lat, lng).catch(() => []),
     fetchOSMFootprints(lat, lng).catch(() => []),
+    fetchGoogleSolarData(lat, lng).catch(() => null),
   ]);
 
   // Pick the closest building from each source
@@ -53,11 +55,13 @@ export async function GET(req: Request) {
   return NextResponse.json({
     microsoft,
     osm,
+    solarPitch: solarData,
     confidence,
     discrepancy: discrepancy !== null ? Math.round(discrepancy * 10) / 10 : null,
     sourcesAvailable: [
       microsoft ? "Microsoft" : null,
       osm ? "OpenStreetMap" : null,
+      solarData ? "Google Solar" : null,
     ].filter(Boolean),
   });
 }

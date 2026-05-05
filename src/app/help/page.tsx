@@ -100,9 +100,16 @@ export default function HelpPage() {
             </Step>
 
             <Step number={6} title="Set the roof pitch">
-              Adjust the pitch angle for each zone. The default is 22.5&deg;. The pitch affects the actual
-              surface area calculation &mdash; steeper roofs have more surface area than the flat footprint.
+              The pitch affects the actual surface area calculation &mdash; steeper roofs have more surface
+              area than the flat footprint.
               <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li><strong>Auto-detected:</strong> If Google Solar API has data for the building, the pitch
+                  is detected automatically and applied to new polygons. Look for the blue banner showing
+                  the detected angle.</li>
+                <li><strong>Manual:</strong> If no data is available, the default is 22.5&deg;. Adjust per zone as needed.</li>
+              </ul>
+              <p className="mt-2">Common pitch ranges:</p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
                 <li><strong>Flat roof:</strong> 0&ndash;5&deg;</li>
                 <li><strong>Low pitch:</strong> 10&ndash;20&deg;</li>
                 <li><strong>Standard pitch:</strong> 20&ndash;30&deg;</li>
