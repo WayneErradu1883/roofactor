@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+/* Fix leaflet-draw toolbar icons (broken relative paths in Next.js builds) */
+.leaflet-draw-toolbar a {
+  background-image: url('/images/leaflet-draw/spritesheet.png');
+  background-image: linear-gradient(transparent, transparent), url('/images/leaflet-draw/spritesheet.svg');
+}
+.leaflet-retina .leaflet-draw-toolbar a {
+  background-image: url('/images/leaflet-draw/spritesheet-2x.png');
+  background-image: linear-gradient(transparent, transparent), url('/images/leaflet-draw/spritesheet.svg');
+}
