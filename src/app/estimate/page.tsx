@@ -85,6 +85,7 @@ export default function EstimatePage() {
   const [notes, setNotes] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+  const [includeHelperInPdf, setIncludeHelperInPdf] = useState(true);
 
   // Calculate totals across all zones
   const totals = useMemo(() => {
@@ -97,6 +98,27 @@ export default function EstimatePage() {
     }, 0);
     return { footprint, surface };
   }, [zones, zonePitches]);
+
+  // Build helper info text for notes
+  const helperInfo = useMemo(() => {
+    if (!geocoded || zones.length === 0 || totals.surface === null) return "";
+    const lines: string[] = [];
+    lines.push(`Address: ${geocoded.formatted_address}`);
+    lines.push(`Coordinates: ${geocoded.lat.toFixed(6)}, ${geocoded.lng.toFixed(6)}`);
+    const sources = footprints?.sourcesAvailable ?? [];
+    lines.push(`Data sources: ${sources.length > 0 ? sources.join(", ") : "Manual measurement only"}`);
+    const avgPitch = zonePitches.length > 0
+      ? (zonePitches.reduce((sum, p) => sum + p.pitchDegrees, 0) / zonePitches.length).toFixed(1)
+      : "22.5";
+    lines.push(`Roof pitch: ${avgPitch}\u00b0${detectedPitch ? ` (auto-detected: ${detectedPitch}\u00b0)` : " (manual)"}`);
+    lines.push(`Footprint area: ${totals.footprint?.toFixed(1)} m\u00b2`);
+    lines.push(`Surface area: ${totals.surface.toFixed(1)} m\u00b2 (adjusted for pitch)`);
+    lines.push(`Zones: ${zones.length}`);
+    if (footprints?.confidence) {
+      lines.push(`Confidence: ${footprints.confidence}`);
+    }
+    return lines.join("\n");
+  }, [geocoded, zones, zonePitches, totals, footprints, detectedPitch]);
 
   const handleAddressFound = useCallback(async (result: GeocodedAddress) => {
     setGeocoded(result);
@@ -225,7 +247,10 @@ export default function EstimatePage() {
                 ? 0.75
                 : 0.5,
           sourcesUsed: JSON.stringify(footprints?.sourcesAvailable || []),
-          notes: notes || null,
+          notes: [
+            includeHelperInPdf && helperInfo ? `--- Measurement Summary ---\n${helperInfo}` : null,
+            notes || null,
+          ].filter(Boolean).join("\n\n") || null,
         }),
       });
 
@@ -380,6 +405,27 @@ export default function EstimatePage() {
 
               {zones.length > 0 && totals.surface !== null && (
                 <>
+                  {/* Helper info */}
+                  {helperInfo && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground">Measurement Summary</Label>
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={includeHelperInPdf}
+                            onChange={(e) => setIncludeHelperInPdf(e.target.checked)}
+                            className="rounded border-input"
+                          />
+                          Include in PDF
+                        </label>
+                      </div>
+                      <pre className="whitespace-pre-wrap rounded-md border border-dashed bg-muted/50 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                        {helperInfo}
+                      </pre>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="notes">Notes (optional)</Label>
                     <textarea
