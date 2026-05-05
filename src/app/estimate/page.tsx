@@ -317,6 +317,24 @@ export default function EstimatePage() {
             />
           )}
 
+          {geocoded && !footprintLoading && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Street View</p>
+              <p className="text-xs text-muted-foreground">
+                Use this to visually assess the roof pitch from ground level.
+              </p>
+              <div className="overflow-hidden rounded-md border">
+                <iframe
+                  className="h-48 w-full"
+                  loading="lazy"
+                  src={`https://www.google.com/maps/embed/v1/streetview?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&location=${geocoded.lat},${geocoded.lng}&heading=0&pitch=20&fov=90`}
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+          )}
+
           {geocoded && (
             <>
               {zones.length === 0 ? (
