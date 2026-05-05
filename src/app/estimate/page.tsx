@@ -289,10 +289,24 @@ export default function EstimatePage() {
 
           {geocoded && (
             <>
-              {zones.length === 0 && (
+              {zones.length === 0 ? (
                 <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
                   Use the polygon tool on the map to trace the roof outline. The orange/blue overlays show detected building footprints for reference. Draw multiple polygons for complex roofs with different pitches.
                 </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-destructive hover:text-destructive"
+                  onClick={() => {
+                    setZones([]);
+                    setZonePitches([]);
+                    setSaved(false);
+                    setEditorKey((k) => k + 1);
+                  }}
+                >
+                  Reset Map Selection
+                </Button>
               )}
 
               <ZoneList
