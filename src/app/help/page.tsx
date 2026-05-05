@@ -49,9 +49,10 @@ export default function HelpPage() {
           {/* Overview */}
           <Section title="What is Roofactor?" description="A quick overview of the application">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Roofactor is a roof surface area estimation tool designed for roof coating and sealing businesses.
-              It uses satellite imagery and building footprint data from Microsoft and OpenStreetMap to help
-              you accurately measure roof areas, calculate costs, and generate professional estimates.
+              Roofactor is a roof surface area estimation tool built for Nomiplex&apos;s roof coating and
+              sealing business. It uses satellite imagery, Google Street View, and building footprint data
+              from Microsoft, OpenStreetMap, and Google Solar API to help you accurately measure roof areas,
+              auto-detect pitch angles, calculate costs, and generate professional estimates.
             </p>
           </Section>
 
@@ -67,25 +68,33 @@ export default function HelpPage() {
               The map will fly to the location and zoom in to satellite view. The address must be in South Africa.
             </Step>
 
-            <Step number={3} title="Review building footprints">
-              The system automatically searches for building footprints from two sources:
+            <Step number={3} title="Review building footprints and Street View">
+              The system automatically searches for building data from three sources:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li><strong>Orange overlay</strong> &mdash; Microsoft Building Footprints (AI-detected from satellite imagery)</li>
                 <li><strong>Blue overlay</strong> &mdash; OpenStreetMap (community-mapped data)</li>
+                <li><strong>Google Solar API</strong> &mdash; Auto-detects roof pitch angle (shown in a blue banner if available)</li>
               </ul>
               <p className="mt-2">
-                These overlays are <strong>reference guides only</strong>. They show the approximate building
+                A <strong>Street View</strong> panel also appears below the source comparison. Use it to
+                visually assess the roof pitch from ground level before drawing.
+              </p>
+              <p className="mt-2">
+                The overlays are <strong>reference guides only</strong>. They show the approximate building
                 outline but may include the entire structure, not just the roof you need to coat.
               </p>
             </Step>
 
             <Step number={4} title="Draw the roof polygon">
-              Use the polygon drawing tool (the shape icon on the map) to trace the actual roof outline:
+              Use the polygon drawing tool (the pentagon icon on the top-left of the map) to trace the actual roof outline:
               <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Click the pentagon icon to activate drawing mode</li>
                 <li>Click on each corner of the roof to place vertices</li>
                 <li>Click the first point again to close the polygon</li>
                 <li>The area in m&sup2; updates automatically</li>
-                <li>You can drag vertices to adjust the shape after drawing</li>
+                <li>Use the edit tool (pencil icon) to drag vertices and adjust the shape</li>
+                <li>Use the delete tool (trash icon) to remove polygons</li>
+                <li>Click <strong>Reset Map Selection</strong> in the left panel to clear all polygons and start over</li>
               </ul>
             </Step>
 
@@ -106,6 +115,8 @@ export default function HelpPage() {
                 <li><strong>Auto-detected:</strong> If Google Solar API has data for the building, the pitch
                   is detected automatically and applied to new polygons. Look for the blue banner showing
                   the detected angle.</li>
+                <li><strong>Street View:</strong> Use the embedded Street View to visually estimate the pitch
+                  if no auto-detection data is available.</li>
                 <li><strong>Manual:</strong> If no data is available, the default is 22.5&deg;. Adjust per zone as needed.</li>
               </ul>
               <p className="mt-2">Common pitch ranges:</p>
@@ -155,10 +166,11 @@ export default function HelpPage() {
           {/* SOP 3: Understanding Data Sources */}
           <Section title="SOP 3: Understanding Data Sources & Confidence" description="How accuracy and confidence scoring works">
             <Step number={1} title="Data sources">
-              Roofactor cross-references two independent building footprint databases:
+              Roofactor cross-references three data sources:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li><strong>Microsoft Building Footprints</strong> &mdash; AI-generated from satellite imagery, covers all of Africa (~500M buildings)</li>
                 <li><strong>OpenStreetMap</strong> &mdash; Community-mapped global data, coverage varies by area</li>
+                <li><strong>Google Solar API</strong> &mdash; Provides roof pitch angles and segment data where available</li>
               </ul>
             </Step>
 
@@ -187,7 +199,7 @@ export default function HelpPage() {
           {/* SOP 4: Tips */}
           <Section title="SOP 4: Tips for Accurate Measurements" description="Best practices for getting within 2% accuracy">
             <Step number={1} title="Zoom in fully">
-              Always zoom to the maximum level (19) before drawing. The closer you are, the more precisely
+              Always zoom to the maximum level before drawing. The closer you are, the more precisely
               you can place vertices on the roof edges.
             </Step>
 
@@ -196,19 +208,75 @@ export default function HelpPage() {
               (top-right of map). Labels help identify the correct building.
             </Step>
 
-            <Step number={3} title="Place more vertices on curves">
+            <Step number={3} title="Use Street View to assess pitch">
+              The Street View panel shows a ground-level view of the building. Use it to visually
+              estimate the roof pitch before or after drawing your polygon. Compare what you see
+              with the common pitch ranges in SOP 1, Step 6.
+            </Step>
+
+            <Step number={4} title="Place more vertices on curves">
               For rounded or irregular roof edges, place more points to follow the contour closely.
               Fewer points means a rougher approximation.
             </Step>
 
-            <Step number={4} title="Verify with on-site measurements">
+            <Step number={5} title="Verify with on-site measurements">
               For high-value quotes, cross-check one or two dimensions with a physical tape measurement
               on site. This validates your satellite-based estimate.
             </Step>
 
-            <Step number={5} title="Account for roof features">
+            <Step number={6} title="Account for roof features">
               Remember to exclude or note areas that don&apos;t need coating (skylights, solar panels,
               chimneys). You can add these details in the notes field.
+            </Step>
+          </Section>
+
+          {/* SOP 5: Profile & Account */}
+          <Section title="SOP 5: Your Profile & Account" description="Managing your profile, password, and appearance">
+            <Step number={1} title="Access your profile">
+              Click your <strong>name</strong> in the top navigation bar to open your profile page.
+            </Step>
+
+            <Step number={2} title="Upload a profile picture">
+              On the profile page, click <strong>Upload Photo</strong> to set a profile picture.
+              Images are automatically cropped to a square and resized. Click <strong>Remove</strong> to
+              go back to your initials.
+            </Step>
+
+            <Step number={3} title="Switch between light and dark mode">
+              On the profile page under <strong>Appearance</strong>, click <strong>Light</strong> or{" "}
+              <strong>Dark</strong> to switch themes. Your preference is saved automatically.
+            </Step>
+
+            <Step number={4} title="Change your password">
+              On the profile page, enter your current password and your new password (minimum 8 characters).
+              Click <strong>Change Password</strong>. You will stay signed in.
+            </Step>
+          </Section>
+
+          {/* SOP 6: Admin */}
+          <Section title="SOP 6: Admin Settings (Admin Only)" description="Session management, password resets, and usage logs">
+            <Step number={1} title="Access admin settings">
+              Click <strong>Settings</strong> in the navigation bar (visible to admin users only).
+            </Step>
+
+            <Step number={2} title="View and revoke sessions">
+              The <strong>Active Sessions</strong> section shows all users and their active sessions.
+              Each user is limited to 2 concurrent sessions. Sessions expire after 2 hours of inactivity.
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Click <strong>Revoke</strong> to end a specific session</li>
+                <li>Click <strong>Revoke All</strong> to end all sessions for a user</li>
+              </ul>
+            </Step>
+
+            <Step number={3} title="Change a user&apos;s password">
+              Select a user from the dropdown, enter a new password, and confirm it.
+              This will <strong>revoke all their sessions</strong> and force them to sign in again
+              with the new password.
+            </Step>
+
+            <Step number={4} title="View usage logs">
+              Click <strong>View Activity Log</strong> to see all user activity including logins,
+              estimate creation/deletion, session revocations, and password changes.
             </Step>
           </Section>
 
