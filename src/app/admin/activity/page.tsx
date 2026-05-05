@@ -27,6 +27,9 @@ const actionLabels: Record<string, string> = {
   "estimate.deleted": "Deleted estimate",
   "user.registered": "User registered",
   "user.login": "User logged in",
+  "session.revoked": "Session revoked",
+  "session.limit_exceeded": "Session limit hit",
+  "user.password_changed": "Password changed",
 };
 
 const actionColors: Record<string, string> = {
@@ -34,6 +37,9 @@ const actionColors: Record<string, string> = {
   "estimate.deleted": "bg-red-100 text-red-800",
   "user.registered": "bg-blue-100 text-blue-800",
   "user.login": "bg-gray-100 text-gray-800",
+  "session.revoked": "bg-orange-100 text-orange-800",
+  "session.limit_exceeded": "bg-yellow-100 text-yellow-800",
+  "user.password_changed": "bg-purple-100 text-purple-800",
 };
 
 export default function ActivityPage() {

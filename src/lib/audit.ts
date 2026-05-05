@@ -4,7 +4,10 @@ export type AuditAction =
   | "estimate.created"
   | "estimate.deleted"
   | "user.registered"
-  | "user.login";
+  | "user.login"
+  | "session.revoked"
+  | "session.limit_exceeded"
+  | "user.password_changed";
 
 export async function logAudit({
   action,

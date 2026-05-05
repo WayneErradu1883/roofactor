@@ -19,8 +19,23 @@ model User {
   password  String
   role      Role       @default(ESTIMATOR)
   estimates Estimate[]
+  sessions  Session[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastActiveAt DateTime @default(now())
+  expiresAt    DateTime
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Estimate {
