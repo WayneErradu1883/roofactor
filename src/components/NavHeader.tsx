@@ -16,6 +16,12 @@ export function NavHeader() {
         {session?.user && (
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+            >
+              Dashboard
+            </Link>
+            <Link
               href="/help"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
             >
