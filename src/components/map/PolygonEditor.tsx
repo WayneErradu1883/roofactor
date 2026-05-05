@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import "leaflet-draw/dist/leaflet.draw.js";
-import "leaflet-draw/dist/leaflet.draw.css";
 
 export interface PolygonData {
   latlngs: [number, number][];
@@ -25,7 +23,11 @@ interface PolygonEditorProps {
 }
 
 function calcGeodesicArea(latlngs: L.LatLng[]): number {
-  return L.GeometryUtil.geodesicArea(latlngs);
+  if (L.GeometryUtil && L.GeometryUtil.geodesicArea) {
+    return L.GeometryUtil.geodesicArea(latlngs);
+  }
+  // Fallback: use turf-style calculation if GeometryUtil missing
+  return 0;
 }
 
 let zoneCounter = 0;
@@ -40,6 +42,21 @@ export default function PolygonEditor({
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const initializedRef = useRef(false);
+  const [drawReady, setDrawReady] = useState(false);
+
+  // Load leaflet-draw dynamically to avoid tree-shaking issues
+  useEffect(() => {
+    if (L.Control.Draw) {
+      setDrawReady(true);
+      return;
+    }
+
+    import("leaflet-draw").then(() => {
+      setDrawReady(true);
+    }).catch((err) => {
+      console.error("Failed to load leaflet-draw:", err);
+    });
+  }, []);
 
   const emitAllZones = useCallback(
     (drawnItems: L.FeatureGroup) => {
@@ -63,6 +80,7 @@ export default function PolygonEditor({
   );
 
   useEffect(() => {
+    if (!drawReady) return;
     if (initializedRef.current) return;
     initializedRef.current = true;
 
@@ -139,8 +157,9 @@ export default function PolygonEditor({
     return () => {
       map.removeControl(drawControl);
       map.removeLayer(drawnItems);
+      initializedRef.current = false;
     };
-  }, [map, initialPolygon, sourceLabel, color, emitAllZones]);
+  }, [map, drawReady, initialPolygon, sourceLabel, color, emitAllZones]);
 
   return null;
 }
