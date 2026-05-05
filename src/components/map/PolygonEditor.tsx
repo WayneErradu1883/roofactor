@@ -3,11 +3,8 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-
-// Force side-effect import — leaflet-draw extends L with Draw controls
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-require("leaflet-draw");
-require("leaflet-draw/dist/leaflet.draw.css");
+import "leaflet-draw/dist/leaflet.draw.js";
+import "leaflet-draw/dist/leaflet.draw.css";
 
 export interface PolygonData {
   latlngs: [number, number][];
