@@ -30,26 +30,18 @@ export function NavHeader() {
               Help
             </Link>
             {session.user.role === "ADMIN" && (
-              <>
-                <Link
-                  href="/admin/activity"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
-                >
-                  Activity
-                </Link>
-                <Link
-                  href="/admin/settings"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
-                >
-                  Settings
-                </Link>
-              </>
+              <Link
+                href="/admin/activity"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+              >
+                Activity
+              </Link>
             )}
             <Link
-              href="/settings"
+              href="/admin/settings"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
             >
-              PDF Settings
+              Settings
             </Link>
             <Link
               href="/profile"

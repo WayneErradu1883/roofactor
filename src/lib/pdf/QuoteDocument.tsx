@@ -325,7 +325,7 @@ interface QuoteDocumentProps {
 }
 
 const DEFAULT_BRANDING: PdfBranding = {
-  companyName: "Roofactor",
+  companyName: "",
   companyTagline: "Professional Roof Coating Solutions",
   companyLogo: null,
   documentTitle: "QUOTATION",
@@ -385,12 +385,10 @@ export default function QuoteDocument({
       <Page size="A4" style={styles.page}>
         {/* ── Header ─────────────────────────────── */}
         <View style={styles.header}>
+          {/* Row 1: Roofactor (fixed) left — Doc title right */}
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
-              <Text style={styles.brandName}>
-                {b.companyLogo ? "" : "\u2302 "}
-                {b.companyName}
-              </Text>
+              <Text style={styles.brandName}>{"\u2302"} Roofactor</Text>
               <Text style={styles.brandTagline}>{b.companyTagline}</Text>
             </View>
             <View style={styles.headerRight}>
@@ -407,10 +405,24 @@ export default function QuoteDocument({
             </View>
           </View>
 
-          {/* Logo centered between name and border */}
-          {b.companyLogo && (
+          {/* Row 2: Company logo + name centered between Roofactor and doc title */}
+          {(b.companyLogo || b.companyName) && (
             <View style={styles.headerLogo}>
-              <Image src={b.companyLogo} style={styles.logoImage} />
+              {b.companyLogo && (
+                <Image src={b.companyLogo} style={styles.logoImage} />
+              )}
+              {b.companyName ? (
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: "Helvetica-Bold",
+                    color: gray600,
+                    marginTop: b.companyLogo ? 4 : 0,
+                  }}
+                >
+                  {b.companyName}
+                </Text>
+              ) : null}
             </View>
           )}
         </View>
@@ -558,7 +570,7 @@ export default function QuoteDocument({
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
             <Text style={styles.footerLogo}>
-              {"\u2302"} {b.companyName}
+              {"\u2302"} Roofactor
             </Text>
             <Text style={styles.footerBrand}>{b.footerText}</Text>
           </View>
