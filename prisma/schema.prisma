@@ -74,3 +74,17 @@ model AuditLog {
   @@index([userId])
   @@index([createdAt])
 }
+
+model PdfSettings {
+  id                 String   @id @default("default")
+  companyName        String   @default("Roofactor")
+  companyTagline     String   @default("Professional Roof Coating Solutions")
+  companyLogo        String?  @db.Text
+  documentTitle      String   @default("QUOTATION")
+  termsAndConditions String?  @db.Text
+  footerText         String   @default("powered for Nomiplex 2026")
+  quoteValidityDays  Int      @default(30)
+  contactPhone       String?
+  contactEmail       String?
+  updatedAt          DateTime @updatedAt
+}

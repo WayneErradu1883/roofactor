@@ -46,6 +46,12 @@ export function NavHeader() {
               </>
             )}
             <Link
+              href="/settings"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+            >
+              PDF Settings
+            </Link>
+            <Link
               href="/profile"
               className="hidden sm:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
             >

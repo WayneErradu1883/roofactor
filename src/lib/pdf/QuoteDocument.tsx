@@ -26,13 +26,15 @@ const styles = StyleSheet.create({
 
   /* ── Header ─────────────────────────────────────── */
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 3,
     borderBottomColor: green,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   headerLeft: {},
   brandName: {
@@ -65,6 +67,15 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: gray600,
     marginTop: 2,
+  },
+  headerLogo: {
+    alignItems: "center" as const,
+    marginTop: 10,
+  },
+  logoImage: {
+    maxWidth: 180,
+    maxHeight: 60,
+    objectFit: "contain" as const,
   },
 
   /* ── Sections ───────────────────────────────────── */
@@ -272,6 +283,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: gray400,
     textAlign: "right" as const,
+    maxWidth: 250,
   },
 });
 
@@ -280,6 +292,18 @@ interface ZoneInfo {
   pitchDegrees: number;
   footprintAreaM2: number;
   surfaceAreaM2: number;
+}
+
+export interface PdfBranding {
+  companyName: string;
+  companyTagline: string;
+  companyLogo: string | null;
+  documentTitle: string;
+  termsAndConditions: string | null;
+  footerText: string;
+  quoteValidityDays: number;
+  contactPhone: string | null;
+  contactEmail: string | null;
 }
 
 interface QuoteDocumentProps {
@@ -297,7 +321,21 @@ interface QuoteDocumentProps {
   estimatorName: string;
   quoteNumber?: string;
   polygonImageUrl?: string;
+  branding?: PdfBranding;
 }
+
+const DEFAULT_BRANDING: PdfBranding = {
+  companyName: "Roofactor",
+  companyTagline: "Professional Roof Coating Solutions",
+  companyLogo: null,
+  documentTitle: "QUOTATION",
+  termsAndConditions:
+    "This is a Desktop Estimate, pending a Site Visit.\nThis quotation is valid for {validity} days from the date above. Pricing is subject to change following on-site inspection. Final measurements will be confirmed during the site visit.",
+  footerText: "powered for Nomiplex 2026",
+  quoteValidityDays: 30,
+  contactPhone: null,
+  contactEmail: null,
+};
 
 function formatCurrency(amount: number): string {
   return `R ${amount.toLocaleString("en-ZA", {
@@ -320,35 +358,61 @@ export default function QuoteDocument({
   estimatorName,
   quoteNumber,
   polygonImageUrl,
+  branding: brandingProp,
 }: QuoteDocumentProps) {
+  const b = { ...DEFAULT_BRANDING, ...brandingProp };
+
+  // Replace {validity} placeholder in terms
+  const termsText = b.termsAndConditions
+    ? b.termsAndConditions.replace(/\{validity\}/g, String(b.quoteValidityDays))
+    : null;
+
   // Filter out internal measurement summary from notes
-  const customerNotes = notes
-    ?.split("\n\n")
-    .filter((block) => !block.startsWith("--- Measurement Summary ---"))
-    .join("\n\n")
-    .trim() || null;
+  const customerNotes =
+    notes
+      ?.split("\n\n")
+      .filter((block) => !block.startsWith("--- Measurement Summary ---"))
+      .join("\n\n")
+      .trim() || null;
+
+  // Build footer contact line
+  const contactParts: string[] = [];
+  if (b.contactPhone) contactParts.push(b.contactPhone);
+  if (b.contactEmail) contactParts.push(b.contactEmail);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ── Header ─────────────────────────────── */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.brandName}>{"\u2302"} Roofactor</Text>
-            <Text style={styles.brandTagline}>
-              Professional Roof Coating Solutions
-            </Text>
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.brandName}>
+                {b.companyLogo ? "" : "\u2302 "}
+                {b.companyName}
+              </Text>
+              <Text style={styles.brandTagline}>{b.companyTagline}</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Text style={styles.docLabel}>{b.documentTitle}</Text>
+              {quoteNumber && (
+                <Text style={styles.quoteNumber}>{quoteNumber}</Text>
+              )}
+              <Text style={styles.headerMeta}>
+                Date: {new Date(createdAt).toLocaleDateString("en-ZA")}
+              </Text>
+              <Text style={styles.headerMeta}>
+                Prepared by: {estimatorName}
+              </Text>
+            </View>
           </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.docLabel}>QUOTATION</Text>
-            {quoteNumber && (
-              <Text style={styles.quoteNumber}>{quoteNumber}</Text>
-            )}
-            <Text style={styles.headerMeta}>
-              Date: {new Date(createdAt).toLocaleDateString("en-ZA")}
-            </Text>
-            <Text style={styles.headerMeta}>Prepared by: {estimatorName}</Text>
-          </View>
+
+          {/* Logo centered between name and border */}
+          {b.companyLogo && (
+            <View style={styles.headerLogo}>
+              <Image src={b.companyLogo} style={styles.logoImage} />
+            </View>
+          )}
         </View>
 
         {/* ── Property ───────────────────────────── */}
@@ -389,7 +453,6 @@ export default function QuoteDocument({
             <Text style={styles.value}>{surfaceAreaM2.toFixed(1)} m²</Text>
           </View>
 
-          {/* Zone breakdown table */}
           {zones.length > 1 && (
             <View style={styles.table}>
               <View style={styles.tableHeader}>
@@ -468,37 +531,48 @@ export default function QuoteDocument({
         )}
 
         {/* ── Terms & Conditions ─────────────────── */}
-        <View style={styles.termsSection}>
-          <Text
-            style={{
-              fontSize: 9,
-              fontFamily: "Helvetica-Bold",
-              color: dark,
-              marginBottom: 4,
-            }}
-          >
-            Terms &amp; Conditions
-          </Text>
-          <Text style={styles.termsText}>
-            This is a Desktop Estimate, pending a Site Visit.
-          </Text>
-          <Text style={[styles.termsText, { marginTop: 2 }]}>
-            This quotation is valid for 30 days from the date above. Pricing is
-            subject to change following on-site inspection. Final measurements
-            will be confirmed during the site visit.
-          </Text>
-        </View>
+        {termsText && (
+          <View style={styles.termsSection}>
+            <Text
+              style={{
+                fontSize: 9,
+                fontFamily: "Helvetica-Bold",
+                color: dark,
+                marginBottom: 4,
+              }}
+            >
+              Terms &amp; Conditions
+            </Text>
+            {termsText.split("\n").map((line, i) => (
+              <Text
+                key={i}
+                style={[styles.termsText, i > 0 ? { marginTop: 2 } : {}]}
+              >
+                {line}
+              </Text>
+            ))}
+          </View>
+        )}
 
         {/* ── Footer ─────────────────────────────── */}
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
-            <Text style={styles.footerLogo}>{"\u2302"} Roofactor</Text>
-            <Text style={styles.footerBrand}>powered for Nomiplex 2026</Text>
+            <Text style={styles.footerLogo}>
+              {"\u2302"} {b.companyName}
+            </Text>
+            <Text style={styles.footerBrand}>{b.footerText}</Text>
           </View>
-          <Text style={styles.footerRight}>
-            Roof area measurements are estimates based on satellite imagery and
-            building footprint data.
-          </Text>
+          <View>
+            {contactParts.length > 0 && (
+              <Text style={styles.footerRight}>
+                {contactParts.join(" | ")}
+              </Text>
+            )}
+            <Text style={styles.footerRight}>
+              Roof area measurements are estimates based on satellite imagery
+              and building footprint data.
+            </Text>
+          </View>
         </View>
       </Page>
     </Document>

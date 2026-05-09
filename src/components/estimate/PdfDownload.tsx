@@ -5,7 +5,7 @@ import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import QuoteDocument from "@/lib/pdf/QuoteDocument";
+import QuoteDocument, { type PdfBranding } from "@/lib/pdf/QuoteDocument";
 import { calculateSurfaceArea } from "@/lib/calc/pitch";
 
 interface PdfDownloadProps {
@@ -376,6 +376,28 @@ async function buildPdfBlob(
 
   const quoteNumber = generateQuoteNumber();
 
+  // Fetch PDF branding settings
+  let branding: PdfBranding | undefined;
+  try {
+    const settingsRes = await fetch("/api/settings/pdf");
+    if (settingsRes.ok) {
+      const { settings } = await settingsRes.json();
+      branding = {
+        companyName: settings.companyName,
+        companyTagline: settings.companyTagline,
+        companyLogo: settings.companyLogo,
+        documentTitle: settings.documentTitle,
+        termsAndConditions: settings.termsAndConditions,
+        footerText: settings.footerText,
+        quoteValidityDays: settings.quoteValidityDays,
+        contactPhone: settings.contactPhone,
+        contactEmail: settings.contactEmail,
+      };
+    }
+  } catch {
+    // use defaults
+  }
+
   const blob = await pdf(
     <QuoteDocument
       address={estimate.address}
@@ -392,6 +414,7 @@ async function buildPdfBlob(
       estimatorName={estimatorName}
       quoteNumber={quoteNumber}
       polygonImageUrl={polygonImageUrl ?? undefined}
+      branding={branding}
     />
   ).toBlob();
 
