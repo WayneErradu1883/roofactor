@@ -31,6 +31,122 @@ interface GeoJSONFeature {
     pitchDegrees?: number;
     footprintAreaM2?: number;
   };
+  geometry: {
+    type: string;
+    coordinates: number[][][];
+  };
+}
+
+function generateQuoteNumber(): string {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const xxx = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+  return `NP-QUOTE-${dd}${mm}-${xxx}`;
+}
+
+function generatePolygonPngDataUrl(
+  geoJSON: { type: string; features: GeoJSONFeature[] },
+  zones: { zone: number }[]
+): string | null {
+  if (
+    !geoJSON ||
+    geoJSON.type !== "FeatureCollection" ||
+    !geoJSON.features?.length
+  )
+    return null;
+
+  const width = 400;
+  const height = 300;
+  const padding = 30;
+
+  // Collect all coordinates to find bounds
+  const allCoords: number[][] = [];
+  for (const f of geoJSON.features) {
+    if (f.geometry?.type === "Polygon" && f.geometry.coordinates?.[0]) {
+      allCoords.push(...f.geometry.coordinates[0]);
+    }
+  }
+  if (allCoords.length === 0) return null;
+
+  const lngs = allCoords.map((c) => c[0]);
+  const lats = allCoords.map((c) => c[1]);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+
+  const rangeX = maxLng - minLng || 0.0001;
+  const rangeY = maxLat - minLat || 0.0001;
+  const scaleX = (width - 2 * padding) / rangeX;
+  const scaleY = (height - 2 * padding) / rangeY;
+  const scale = Math.min(scaleX, scaleY);
+
+  // Center the polygon in the viewBox
+  const usedW = rangeX * scale;
+  const usedH = rangeY * scale;
+  const offsetX = padding + (width - 2 * padding - usedW) / 2;
+  const offsetY = padding + (height - 2 * padding - usedH) / 2;
+
+  function toPixel(coord: number[]): { x: number; y: number } {
+    return {
+      x: offsetX + (coord[0] - minLng) * scale,
+      y: offsetY + (maxLat - coord[1]) * scale, // flip Y
+    };
+  }
+
+  // Build SVG polygons
+  let polygonsSvg = "";
+  const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+  geoJSON.features.forEach((f, idx) => {
+    if (f.geometry?.type !== "Polygon" || !f.geometry.coordinates?.[0]) return;
+    const coords = f.geometry.coordinates[0];
+    const points = coords.map((c) => {
+      const p = toPixel(c);
+      return `${p.x},${p.y}`;
+    }).join(" ");
+
+    const color = colors[idx % colors.length];
+    polygonsSvg += `<polygon points="${points}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
+
+    // Zone label at centroid
+    const cx = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+    const cy = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+    const cp = toPixel([cx, cy]);
+    const zoneNum = zones[idx]?.zone ?? idx + 1;
+    polygonsSvg += `<text x="${cp.x}" y="${cp.y}" text-anchor="middle" dominant-baseline="central" font-family="Helvetica,Arial,sans-serif" font-size="14" font-weight="bold" fill="${color}">Zone ${zoneNum}</text>`;
+  });
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="${width}" height="${height}" fill="#f8fafc" rx="8"/>
+  <rect x="${padding - 5}" y="${padding - 5}" width="${width - 2 * padding + 10}" height="${height - 2 * padding + 10}" fill="none" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4" rx="4"/>
+  ${polygonsSvg}
+</svg>`;
+
+  // Convert SVG to PNG via canvas for @react-pdf/renderer compatibility
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
+async function svgToPngDataUrl(svgDataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * 2; // 2x for sharpness
+      canvas.height = img.height * 2;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(svgDataUrl);
+        return;
+      }
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("SVG to PNG conversion failed"));
+    img.src = svgDataUrl;
+  });
 }
 
 export default function PdfDownload({
@@ -50,9 +166,12 @@ export default function PdfDownload({
         surfaceAreaM2: number;
       }[] = [];
 
+      let parsedGeoJSON: { type: string; features: GeoJSONFeature[] } | null = null;
+
       try {
         const geoJSON = JSON.parse(estimate.footprintGeoJSON);
         if (geoJSON.type === "FeatureCollection") {
+          parsedGeoJSON = geoJSON;
           zones = geoJSON.features.map((f: GeoJSONFeature, idx: number) => {
             const pitch = f.properties?.pitchDegrees ?? estimate.pitchDegrees;
             const area = f.properties?.footprintAreaM2 ?? 0;
@@ -84,12 +203,21 @@ export default function PdfDownload({
         ];
       }
 
-      let sourcesUsed: string[] = [];
-      try {
-        sourcesUsed = JSON.parse(estimate.sourcesUsed);
-      } catch {
-        // ignore
+      // Generate polygon image
+      let polygonImageUrl: string | null = null;
+      if (parsedGeoJSON) {
+        const svgUrl = generatePolygonPngDataUrl(parsedGeoJSON, zones);
+        if (svgUrl) {
+          try {
+            polygonImageUrl = await svgToPngDataUrl(svgUrl);
+          } catch {
+            polygonImageUrl = svgUrl; // fallback to SVG
+          }
+        }
       }
+
+      // Generate quote number
+      const quoteNumber = generateQuoteNumber();
 
       const blob = await pdf(
         <QuoteDocument
@@ -101,12 +229,12 @@ export default function PdfDownload({
           pitchDegrees={estimate.pitchDegrees}
           ratePerM2={estimate.ratePerM2}
           totalCost={estimate.totalCost}
-          confidenceScore={estimate.confidenceScore}
-          sourcesUsed={sourcesUsed}
           notes={estimate.notes}
           zones={zones}
           createdAt={estimate.createdAt}
           estimatorName={estimatorName}
+          quoteNumber={quoteNumber}
+          polygonImageUrl={polygonImageUrl ?? undefined}
         />
       ).toBlob();
 

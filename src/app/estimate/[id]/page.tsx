@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { pitchMultiplier } from "@/lib/calc/pitch";
 import PdfDownload from "@/components/estimate/PdfDownload";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -32,6 +31,11 @@ const FootprintOverlay = dynamic(
 
 const FlyToComponent = dynamic(
   () => import("@/components/map/MapView").then((mod) => mod.FlyTo),
+  { ssr: false }
+);
+
+const MarkerComponent = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
   { ssr: false }
 );
 
@@ -235,7 +239,7 @@ export default function EstimateDetailPage() {
                       <span>Zone {p.zone}</span>
                       <span>{p.pitch}&deg; pitch</span>
                       <span>
-                        {p.area.toFixed(1)} m² x{pitchMultiplier(p.pitch).toFixed(3)}
+                        {p.area.toFixed(1)} m²
                       </span>
                     </div>
                   ))}
@@ -244,8 +248,7 @@ export default function EstimateDetailPage() {
 
               {polygons.length <= 1 && (
                 <div className="text-sm text-muted-foreground">
-                  Pitch: {estimate.pitchDegrees}&deg; (x
-                  {pitchMultiplier(estimate.pitchDegrees).toFixed(3)})
+                  Pitch: {estimate.pitchDegrees}&deg;
                 </div>
               )}
             </CardContent>
@@ -354,6 +357,7 @@ export default function EstimateDetailPage() {
               center={[estimate.latitude, estimate.longitude]}
               zoom={19}
             />
+            <MarkerComponent position={[estimate.latitude, estimate.longitude]} />
             {polygons.map((p) => (
               <FootprintOverlay
                 key={p.zone}

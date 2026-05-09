@@ -41,6 +41,11 @@ const FlyToComponent = dynamic(
   { ssr: false }
 );
 
+const MarkerComponent = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+
 interface FootprintSource {
   coordinates: [number, number][];
   areaM2: number;
@@ -77,7 +82,7 @@ export default function EstimatePage() {
   const [footprintLoading, setFootprintLoading] = useState(false);
   const [zones, setZones] = useState<ZoneData[]>([]);
   const [zonePitches, setZonePitches] = useState<ZonePitch[]>([]);
-  const [ratePerM2, setRatePerM2] = useState(150);
+  const [ratePerM2, setRatePerM2] = useState(140);
   const [showMicrosoft, setShowMicrosoft] = useState(true);
   const [showOSM, setShowOSM] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -467,6 +472,11 @@ export default function EstimatePage() {
                 center={[geocoded.lat, geocoded.lng]}
                 zoom={BUILDING_ZOOM}
               />
+            )}
+
+            {/* Address pin */}
+            {geocoded && (
+              <MarkerComponent position={[geocoded.lat, geocoded.lng]} />
             )}
 
             {/* Source footprint overlays */}

@@ -3,121 +3,253 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
+
+const green = "#22c55e";
+const darkGreen = "#16a34a";
+const dark = "#111827";
+const gray600 = "#4b5563";
+const gray400 = "#9ca3af";
+const gray200 = "#e5e7eb";
+const gray50 = "#f9fafb";
 
 const styles = StyleSheet.create({
   page: {
     padding: 40,
+    paddingBottom: 80,
     fontFamily: "Helvetica",
     fontSize: 10,
-    color: "#1a1a1a",
+    color: dark,
   },
+
+  /* ── Header ─────────────────────────────────────── */
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 30,
-    borderBottomWidth: 2,
-    borderBottomColor: "#22c55e",
-    paddingBottom: 15,
+    alignItems: "flex-start",
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 3,
+    borderBottomColor: green,
   },
-  title: {
-    fontSize: 24,
+  headerLeft: {},
+  brandName: {
+    fontSize: 22,
     fontFamily: "Helvetica-Bold",
-    color: "#111",
+    color: dark,
   },
-  subtitle: {
+  brandTagline: {
+    fontSize: 8,
+    color: gray400,
+    marginTop: 2,
+  },
+  headerRight: {
+    textAlign: "right" as const,
+    alignItems: "flex-end" as const,
+  },
+  docLabel: {
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
+    color: green,
+    letterSpacing: 2,
+  },
+  quoteNumber: {
     fontSize: 10,
-    color: "#666",
+    fontFamily: "Helvetica-Bold",
+    color: dark,
     marginTop: 4,
   },
-  dateBlock: {
-    textAlign: "right" as const,
+  headerMeta: {
+    fontSize: 9,
+    color: gray600,
+    marginTop: 2,
   },
+
+  /* ── Sections ───────────────────────────────────── */
   section: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
+    color: dark,
+    paddingBottom: 5,
     marginBottom: 8,
-    color: "#333",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-    paddingBottom: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: green,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   label: {
-    color: "#666",
+    fontSize: 10,
+    color: gray600,
   },
   value: {
+    fontSize: 10,
     fontFamily: "Helvetica-Bold",
+    color: dark,
   },
+
+  /* ── Property ───────────────────────────────────── */
+  propertyCard: {
+    backgroundColor: gray50,
+    borderRadius: 6,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: green,
+  },
+  addressText: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: dark,
+  },
+  coordsText: {
+    fontSize: 8,
+    color: gray400,
+    marginTop: 3,
+  },
+
+  /* ── Polygon image ──────────────────────────────── */
+  polygonSection: {
+    marginBottom: 18,
+    alignItems: "center" as const,
+  },
+  polygonImage: {
+    width: 320,
+    height: 240,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: gray200,
+  },
+  polygonCaption: {
+    fontSize: 8,
+    color: gray400,
+    marginTop: 4,
+    textAlign: "center" as const,
+  },
+
+  /* ── Table ──────────────────────────────────────── */
   table: {
     marginTop: 6,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    backgroundColor: dark,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+  },
+  tableHeaderText: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 9,
+    color: "#ffffff",
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 5,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: gray200,
+  },
+  tableRowAlt: {
+    flexDirection: "row",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: gray50,
+    borderBottomWidth: 1,
+    borderBottomColor: gray200,
   },
   col1: { width: "20%" },
-  col2: { width: "25%" },
-  col3: { width: "25%" },
+  col2: { width: "30%" },
+  col3: { width: "20%", textAlign: "center" as const },
   col4: { width: "30%", textAlign: "right" as const },
+
+  /* ── Totals ─────────────────────────────────────── */
+  summaryCard: {
+    backgroundColor: gray50,
+    borderRadius: 6,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: gray200,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 4,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    color: gray600,
+  },
+  summaryValue: {
+    fontSize: 10,
+    color: dark,
+  },
+  totalDivider: {
+    borderTopWidth: 2,
+    borderTopColor: green,
+    marginTop: 8,
+    paddingTop: 8,
+  },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 2,
-    borderTopColor: "#22c55e",
+    alignItems: "center",
   },
   totalLabel: {
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
+    color: dark,
   },
   totalValue: {
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: "Helvetica-Bold",
-    color: "#22c55e",
+    color: darkGreen,
   },
-  confidenceBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    fontSize: 9,
-    alignSelf: "flex-start" as const,
-  },
-  notes: {
+
+  /* ── Notes ──────────────────────────────────────── */
+  notesBox: {
     marginTop: 6,
     padding: 10,
-    backgroundColor: "#fafafa",
+    backgroundColor: gray50,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: gray200,
+  },
+  notesText: {
+    fontSize: 9,
+    color: gray600,
     lineHeight: 1.5,
   },
+
+  /* ── Terms ──────────────────────────────────────── */
+  termsSection: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: gray200,
+  },
+  termsText: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Oblique",
+    color: gray600,
+    lineHeight: 1.4,
+  },
+
+  /* ── Footer ─────────────────────────────────────── */
   footer: {
     position: "absolute" as const,
     bottom: 25,
     left: 40,
     right: 40,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    paddingTop: 10,
+    borderTopWidth: 2,
+    borderTopColor: green,
+    paddingTop: 8,
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
@@ -130,17 +262,16 @@ const styles = StyleSheet.create({
   footerLogo: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: "#333",
+    color: dark,
   },
   footerBrand: {
-    fontSize: 8,
-    color: "#999",
+    fontSize: 7,
+    color: gray400,
   },
   footerRight: {
     fontSize: 7,
-    color: "#aaa",
+    color: gray400,
     textAlign: "right" as const,
-    maxWidth: 220,
   },
 });
 
@@ -160,118 +291,129 @@ interface QuoteDocumentProps {
   pitchDegrees: number;
   ratePerM2: number | null;
   totalCost: number | null;
-  confidenceScore: number | null;
-  sourcesUsed: string[];
   notes: string | null;
   zones: ZoneInfo[];
   createdAt: string;
   estimatorName: string;
+  quoteNumber?: string;
+  polygonImageUrl?: string;
 }
 
 function formatCurrency(amount: number): string {
-  return `R${amount.toLocaleString("en-ZA", {
+  return `R ${amount.toLocaleString("en-ZA", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
-function pitchMultiplier(degrees: number): number {
-  if (degrees <= 0) return 1;
-  return 1 / Math.cos((degrees * Math.PI) / 180);
-}
-
 export default function QuoteDocument({
   address,
+  latitude,
+  longitude,
   footprintAreaM2,
   surfaceAreaM2,
   ratePerM2,
   totalCost,
-  confidenceScore,
-  sourcesUsed,
   notes,
   zones,
   createdAt,
   estimatorName,
+  quoteNumber,
+  polygonImageUrl,
 }: QuoteDocumentProps) {
-  const confidenceLabel =
-    confidenceScore !== null
-      ? confidenceScore >= 0.9
-        ? "High"
-        : confidenceScore >= 0.7
-          ? "Medium"
-          : "Low"
-      : null;
-
-  const confidenceColor =
-    confidenceLabel === "High"
-      ? "#dcfce7"
-      : confidenceLabel === "Medium"
-        ? "#fef3c7"
-        : "#fee2e2";
+  // Filter out internal measurement summary from notes
+  const customerNotes = notes
+    ?.split("\n\n")
+    .filter((block) => !block.startsWith("--- Measurement Summary ---"))
+    .join("\n\n")
+    .trim() || null;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
+        {/* ── Header ─────────────────────────────── */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>{"\u2302"} Roofactor</Text>
-            <Text style={styles.subtitle}>Roof Area Estimate &amp; Quote</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.brandName}>{"\u2302"} Roofactor</Text>
+            <Text style={styles.brandTagline}>
+              Professional Roof Coating Solutions
+            </Text>
           </View>
-          <View style={styles.dateBlock}>
-            <Text>Date: {new Date(createdAt).toLocaleDateString("en-ZA")}</Text>
-            <Text style={{ marginTop: 2 }}>Estimator: {estimatorName}</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.docLabel}>QUOTATION</Text>
+            {quoteNumber && (
+              <Text style={styles.quoteNumber}>{quoteNumber}</Text>
+            )}
+            <Text style={styles.headerMeta}>
+              Date: {new Date(createdAt).toLocaleDateString("en-ZA")}
+            </Text>
+            <Text style={styles.headerMeta}>Prepared by: {estimatorName}</Text>
           </View>
         </View>
 
-        {/* Property */}
+        {/* ── Property ───────────────────────────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Property</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{address}</Text>
+          <Text style={styles.sectionTitle}>Property Details</Text>
+          <View style={styles.propertyCard}>
+            <Text style={styles.addressText}>{address}</Text>
+            <Text style={styles.coordsText}>
+              GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+            </Text>
           </View>
         </View>
 
-        {/* Measurements */}
+        {/* ── Roof Layout ────────────────────────── */}
+        {polygonImageUrl && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Roof Layout</Text>
+            <View style={styles.polygonSection}>
+              <Image src={polygonImageUrl} style={styles.polygonImage} />
+              <Text style={styles.polygonCaption}>
+                Roof polygon outline ({zones.length} zone
+                {zones.length !== 1 ? "s" : ""})
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* ── Measurements ───────────────────────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Measurements</Text>
+          <Text style={styles.sectionTitle}>Roof Measurements</Text>
           <View style={styles.row}>
-            <Text style={styles.label}>Total Footprint (2D):</Text>
+            <Text style={styles.label}>Total Footprint Area (2D):</Text>
             <Text style={styles.value}>{footprintAreaM2.toFixed(1)} m²</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Total Surface Area (with pitch):</Text>
+            <Text style={styles.label}>
+              Total Surface Area (pitch-adjusted):
+            </Text>
             <Text style={styles.value}>{surfaceAreaM2.toFixed(1)} m²</Text>
           </View>
 
-          {/* Zone breakdown */}
+          {/* Zone breakdown table */}
           {zones.length > 1 && (
             <View style={styles.table}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.col1, { fontFamily: "Helvetica-Bold" }]}>
-                  Zone
-                </Text>
-                <Text style={[styles.col2, { fontFamily: "Helvetica-Bold" }]}>
+                <Text style={[styles.tableHeaderText, styles.col1]}>Zone</Text>
+                <Text style={[styles.tableHeaderText, styles.col2]}>
                   Footprint
                 </Text>
-                <Text style={[styles.col3, { fontFamily: "Helvetica-Bold" }]}>
-                  Pitch
-                </Text>
-                <Text style={[styles.col4, { fontFamily: "Helvetica-Bold" }]}>
+                <Text style={[styles.tableHeaderText, styles.col3]}>Pitch</Text>
+                <Text style={[styles.tableHeaderText, styles.col4]}>
                   Surface Area
                 </Text>
               </View>
-              {zones.map((z) => (
-                <View key={z.zone} style={styles.tableRow}>
+              {zones.map((z, idx) => (
+                <View
+                  key={z.zone}
+                  style={idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt}
+                >
                   <Text style={styles.col1}>Zone {z.zone}</Text>
                   <Text style={styles.col2}>
                     {z.footprintAreaM2.toFixed(1)} m²
                   </Text>
-                  <Text style={styles.col3}>
-                    {z.pitchDegrees}° (x{pitchMultiplier(z.pitchDegrees).toFixed(3)})
-                  </Text>
-                  <Text style={styles.col4}>
+                  <Text style={styles.col3}>{z.pitchDegrees}°</Text>
+                  <Text style={[styles.col4, { fontFamily: "Helvetica-Bold" }]}>
                     {z.surfaceAreaM2.toFixed(1)} m²
                   </Text>
                 </View>
@@ -279,77 +421,84 @@ export default function QuoteDocument({
             </View>
           )}
 
-          {zones.length <= 1 && zones.length > 0 && (
+          {zones.length === 1 && (
             <View style={styles.row}>
-              <Text style={styles.label}>Pitch:</Text>
-              <Text style={styles.value}>
-                {zones[0].pitchDegrees}° (x
-                {pitchMultiplier(zones[0].pitchDegrees).toFixed(3)})
-              </Text>
+              <Text style={styles.label}>Roof Pitch:</Text>
+              <Text style={styles.value}>{zones[0].pitchDegrees}°</Text>
             </View>
           )}
         </View>
 
-        {/* Cost Estimate */}
-        {ratePerM2 && totalCost && (
+        {/* ── Quote Summary ──────────────────────── */}
+        {ratePerM2 != null && totalCost != null && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Cost Estimate</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Surface Area:</Text>
-              <Text>{surfaceAreaM2.toFixed(1)} m²</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Rate per m²:</Text>
-              <Text>{formatCurrency(ratePerM2)}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Estimated Total:</Text>
-              <Text style={styles.totalValue}>{formatCurrency(totalCost)}</Text>
+            <Text style={styles.sectionTitle}>Quote Summary</Text>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Surface Area:</Text>
+                <Text style={styles.summaryValue}>
+                  {surfaceAreaM2.toFixed(1)} m²
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Rate per m²:</Text>
+                <Text style={styles.summaryValue}>
+                  {formatCurrency(ratePerM2)}
+                </Text>
+              </View>
+              <View style={styles.totalDivider}>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total (incl.):</Text>
+                  <Text style={styles.totalValue}>
+                    {formatCurrency(totalCost)}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
         )}
 
-        {/* Data Quality */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data Quality</Text>
-          {confidenceLabel && (
-            <View
-              style={[
-                styles.confidenceBadge,
-                { backgroundColor: confidenceColor },
-              ]}
-            >
-              <Text>{confidenceLabel} Confidence</Text>
+        {/* ── Notes ──────────────────────────────── */}
+        {customerNotes && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Additional Notes</Text>
+            <View style={styles.notesBox}>
+              <Text style={styles.notesText}>{customerNotes}</Text>
             </View>
-          )}
-          {sourcesUsed.length > 0 && (
-            <View style={[styles.row, { marginTop: 6 }]}>
-              <Text style={styles.label}>Data Sources:</Text>
-              <Text>{sourcesUsed.join(", ")}</Text>
-            </View>
-          )}
+          </View>
+        )}
+
+        {/* ── Terms & Conditions ─────────────────── */}
+        <View style={styles.termsSection}>
+          <Text
+            style={{
+              fontSize: 9,
+              fontFamily: "Helvetica-Bold",
+              color: dark,
+              marginBottom: 4,
+            }}
+          >
+            Terms &amp; Conditions
+          </Text>
+          <Text style={styles.termsText}>
+            This is a Desktop Estimate, pending a Site Visit.
+          </Text>
+          <Text style={[styles.termsText, { marginTop: 2 }]}>
+            This quotation is valid for 30 days from the date above. Pricing is
+            subject to change following on-site inspection. Final measurements
+            will be confirmed during the site visit.
+          </Text>
         </View>
 
-        {/* Notes */}
-        {notes && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <View style={styles.notes}>
-              <Text>{notes}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Footer */}
+        {/* ── Footer ─────────────────────────────── */}
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
             <Text style={styles.footerLogo}>{"\u2302"} Roofactor</Text>
             <Text style={styles.footerBrand}>powered for Nomiplex 2026</Text>
           </View>
           <Text style={styles.footerRight}>
-            Roof area measurements are estimates based on satellite imagery
-            and building footprint data. Actual measurements may vary.
-            This quote is valid for 30 days from the date above.
+            Roof area measurements are estimates based on satellite imagery and
+            building footprint data.
           </Text>
         </View>
       </Page>

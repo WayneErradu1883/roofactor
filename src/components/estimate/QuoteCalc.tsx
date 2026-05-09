@@ -19,7 +19,7 @@ export default function QuoteCalc({
   surfaceAreaM2,
   onRateChange,
 }: QuoteCalcProps) {
-  const [rate, setRate] = useState(150);
+  const [rate, setRate] = useState(140);
 
   function handleRateChange(value: number) {
     setRate(value);
@@ -42,7 +42,8 @@ export default function QuoteCalc({
             id="rate"
             type="number"
             min={0}
-            step={10}
+            max={140}
+            step={5}
             value={rate}
             onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
             className="w-32"
