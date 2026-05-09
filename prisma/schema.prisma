@@ -48,6 +48,8 @@ model Session {
 model Estimate {
   id               String   @id @default(cuid())
   address          String
+  customerName     String?
+  customerPhone    String?
   latitude         Float
   longitude        Float
   footprintGeoJSON String   @db.Text

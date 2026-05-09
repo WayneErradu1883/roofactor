@@ -71,14 +71,18 @@ export async function PATCH(
   const body = await req.json();
   const { opportunityStatus, opportunityReason } = body;
 
-  if (!opportunityStatus || !["WON", "LOST"].includes(opportunityStatus)) {
+  if (
+    !opportunityStatus ||
+    !["WON", "LOST", "OPEN"].includes(opportunityStatus)
+  ) {
     return NextResponse.json(
-      { error: "Status must be WON or LOST" },
+      { error: "Status must be WON, LOST, or OPEN" },
       { status: 400 }
     );
   }
 
-  if (!opportunityReason?.trim()) {
+  // Reason required for WON/LOST, not for reopening
+  if (opportunityStatus !== "OPEN" && !opportunityReason?.trim()) {
     return NextResponse.json(
       { error: "A reason is required" },
       { status: 400 }
@@ -97,16 +101,28 @@ export async function PATCH(
     where: { id },
     data: {
       opportunityStatus,
-      opportunityReason: opportunityReason.trim(),
+      opportunityReason:
+        opportunityStatus === "OPEN"
+          ? null
+          : (opportunityReason?.trim() ?? null),
       opportunityUpdatedAt: new Date(),
     },
   });
 
+  const actionMap: Record<string, "estimate.won" | "estimate.lost" | "estimate.reopened"> = {
+    WON: "estimate.won",
+    LOST: "estimate.lost",
+    OPEN: "estimate.reopened",
+  };
+
   await logAudit({
-    action: opportunityStatus === "WON" ? "estimate.won" : "estimate.lost",
+    action: actionMap[opportunityStatus],
     entityType: "estimate",
     entityId: id,
-    details: `${estimate.address} — ${opportunityReason.trim()}`,
+    details:
+      opportunityStatus === "OPEN"
+        ? `${estimate.address} — Reopened`
+        : `${estimate.address} — ${opportunityReason!.trim()}`,
     userId: session.user.id,
     userName: session.user.name,
   });

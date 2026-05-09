@@ -11,6 +11,7 @@ import QuoteCalc from "@/components/estimate/QuoteCalc";
 import ZoneList, { type ZonePitch } from "@/components/estimate/ZoneList";
 import SourceComparison from "@/components/estimate/SourceComparison";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { calculateSurfaceArea } from "@/lib/calc/pitch";
 import type { ZoneData } from "@/components/map/PolygonEditor";
@@ -88,6 +89,8 @@ export default function EstimatePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [notes, setNotes] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
   const [includeHelperInPdf, setIncludeHelperInPdf] = useState(true);
@@ -252,6 +255,8 @@ export default function EstimatePage() {
                 ? 0.75
                 : 0.5,
           sourcesUsed: JSON.stringify(footprints?.sourcesAvailable || []),
+          customerName: customerName.trim() || null,
+          customerPhone: customerPhone.trim() || null,
           notes: [
             includeHelperInPdf && helperInfo ? `--- Measurement Summary ---\n${helperInfo}` : null,
             notes || null,
@@ -306,6 +311,32 @@ export default function EstimatePage() {
               <p className="text-xs text-muted-foreground">
                 {geocoded.lat.toFixed(6)}, {geocoded.lng.toFixed(6)}
               </p>
+            </div>
+          )}
+
+          {geocoded && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="customerName" className="text-xs">Customer Name</Label>
+                <Input
+                  id="customerName"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Name (optional)"
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="customerPhone" className="text-xs">Phone</Label>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="e.g. 082 123 4567"
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
           )}
 

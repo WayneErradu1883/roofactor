@@ -5,6 +5,7 @@ export type AuditAction =
   | "estimate.deleted"
   | "estimate.won"
   | "estimate.lost"
+  | "estimate.reopened"
   | "user.registered"
   | "user.login"
   | "session.revoked"

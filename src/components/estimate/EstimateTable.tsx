@@ -14,6 +14,8 @@ import {
 interface EstimateRow {
   id: string;
   address: string;
+  customerName: string | null;
+  customerPhone: string | null;
   surfaceAreaM2: number;
   totalCost: number | null;
   createdAt: string;
@@ -154,25 +156,72 @@ export default function EstimateTable({ estimates: initialEstimates }: EstimateT
     setError("");
   }
 
+  // Reopen handler (no reason needed)
+  async function handleReopen(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/estimate/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opportunityStatus: "OPEN" }),
+      });
+      if (res.ok) {
+        setEstimates((prev) =>
+          prev.map((est) =>
+            est.id === id
+              ? { ...est, opportunityStatus: "OPEN" as const, opportunityReason: null }
+              : est
+          )
+        );
+      }
+    } catch {
+      // silent
+    }
+  }
+
   function statusBadge(est: EstimateRow) {
     if (est.opportunityStatus === "WON") {
       return (
-        <span
-          className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
-          title={est.opportunityReason ?? ""}
-        >
-          Won
-        </span>
+        <div className="flex items-center gap-1">
+          <span
+            className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
+            title={est.opportunityReason ?? ""}
+          >
+            Won
+          </span>
+          <button
+            type="button"
+            className="rounded-full p-0.5 text-muted-foreground/50 hover:text-foreground transition-colors"
+            title="Reopen"
+            onClick={(e) => handleReopen(est.id, e)}
+          >
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 1 9 9" /><path d="M3 21v-9h9" />
+            </svg>
+          </button>
+        </div>
       );
     }
     if (est.opportunityStatus === "LOST") {
       return (
-        <span
-          className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
-          title={est.opportunityReason ?? ""}
-        >
-          Lost
-        </span>
+        <div className="flex items-center gap-1">
+          <span
+            className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+            title={est.opportunityReason ?? ""}
+          >
+            Lost
+          </span>
+          <button
+            type="button"
+            className="rounded-full p-0.5 text-muted-foreground/50 hover:text-foreground transition-colors"
+            title="Reopen"
+            onClick={(e) => handleReopen(est.id, e)}
+          >
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 1 9 9" /><path d="M3 21v-9h9" />
+            </svg>
+          </button>
+        </div>
       );
     }
     // OPEN — show toggle buttons
@@ -280,8 +329,14 @@ export default function EstimateTable({ estimates: initialEstimates }: EstimateT
                         (window.location.href = `/estimate/${est.id}`)
                       }
                     >
-                      <td className="py-2 pr-4 max-w-[200px] truncate">
-                        {est.address}
+                      <td className="py-2 pr-4 max-w-[250px]">
+                        <div className="truncate">{est.address}</div>
+                        {est.customerName && (
+                          <div className="truncate text-xs text-muted-foreground">
+                            {est.customerName}
+                            {est.customerPhone && ` \u00b7 ${est.customerPhone}`}
+                          </div>
+                        )}
                       </td>
                       <td className="py-2 pr-4 whitespace-nowrap">
                         {est.surfaceAreaM2.toFixed(1)} m²

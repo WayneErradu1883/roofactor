@@ -23,6 +23,8 @@ export async function POST(req: Request) {
     confidenceScore,
     sourcesUsed,
     notes,
+    customerName,
+    customerPhone,
   } = body;
 
   if (
@@ -54,6 +56,8 @@ export async function POST(req: Request) {
       confidenceScore: confidenceScore ?? null,
       sourcesUsed: sourcesUsed ?? "[]",
       notes: notes ?? null,
+      customerName: customerName ?? null,
+      customerPhone: customerPhone ?? null,
       userId: session.user.id,
     },
   });
