@@ -30,12 +30,20 @@ export function NavHeader() {
               Help
             </Link>
             {session.user.role === "ADMIN" && (
-              <Link
-                href="/admin/activity"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
-              >
-                Activity
-              </Link>
+              <>
+                <Link
+                  href="/admin/estimates"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+                >
+                  All Estimates
+                </Link>
+                <Link
+                  href="/admin/activity"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+                >
+                  Activity
+                </Link>
+              </>
             )}
             <Link
               href="/admin/settings"
