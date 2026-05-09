@@ -45,7 +45,40 @@ function generateQuoteNumber(): string {
   return `NP-QUOTE-${dd}${mm}-${xxx}`;
 }
 
-function generatePolygonPngDataUrl(
+/**
+ * Fetch a satellite image with polygon overlay from our API route
+ * (uses server-side Google Maps API key), then convert to data URL.
+ */
+async function fetchSatelliteMapImage(
+  lat: number,
+  lng: number,
+  footprintGeoJSON: string
+): Promise<string | null> {
+  try {
+    const params = new URLSearchParams({
+      lat: String(lat),
+      lng: String(lng),
+      geojson: footprintGeoJSON,
+    });
+    const res = await fetch(`/api/static-map?${params}`);
+    if (!res.ok) return null;
+
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fallback: render a simple SVG polygon diagram (no satellite imagery).
+ */
+function generateFallbackSvg(
   geoJSON: { type: string; features: GeoJSONFeature[] },
   zones: { zone: number }[]
 ): string | null {
@@ -60,7 +93,6 @@ function generatePolygonPngDataUrl(
   const height = 300;
   const padding = 30;
 
-  // Collect all coordinates to find bounds
   const allCoords: number[][] = [];
   for (const f of geoJSON.features) {
     if (f.geometry?.type === "Polygon" && f.geometry.coordinates?.[0]) {
@@ -82,7 +114,6 @@ function generatePolygonPngDataUrl(
   const scaleY = (height - 2 * padding) / rangeY;
   const scale = Math.min(scaleX, scaleY);
 
-  // Center the polygon in the viewBox
   const usedW = rangeX * scale;
   const usedH = rangeY * scale;
   const offsetX = padding + (width - 2 * padding - usedW) / 2;
@@ -91,26 +122,26 @@ function generatePolygonPngDataUrl(
   function toPixel(coord: number[]): { x: number; y: number } {
     return {
       x: offsetX + (coord[0] - minLng) * scale,
-      y: offsetY + (maxLat - coord[1]) * scale, // flip Y
+      y: offsetY + (maxLat - coord[1]) * scale,
     };
   }
 
-  // Build SVG polygons
   let polygonsSvg = "";
   const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   geoJSON.features.forEach((f, idx) => {
     if (f.geometry?.type !== "Polygon" || !f.geometry.coordinates?.[0]) return;
     const coords = f.geometry.coordinates[0];
-    const points = coords.map((c) => {
-      const p = toPixel(c);
-      return `${p.x},${p.y}`;
-    }).join(" ");
+    const points = coords
+      .map((c) => {
+        const p = toPixel(c);
+        return `${p.x},${p.y}`;
+      })
+      .join(" ");
 
     const color = colors[idx % colors.length];
     polygonsSvg += `<polygon points="${points}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
 
-    // Zone label at centroid
     const cx = coords.reduce((s, c) => s + c[0], 0) / coords.length;
     const cy = coords.reduce((s, c) => s + c[1], 0) / coords.length;
     const cp = toPixel([cx, cy]);
@@ -120,11 +151,9 @@ function generatePolygonPngDataUrl(
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <rect width="${width}" height="${height}" fill="#f8fafc" rx="8"/>
-  <rect x="${padding - 5}" y="${padding - 5}" width="${width - 2 * padding + 10}" height="${height - 2 * padding + 10}" fill="none" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4" rx="4"/>
   ${polygonsSvg}
 </svg>`;
 
-  // Convert SVG to PNG via canvas for @react-pdf/renderer compatibility
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 }
 
@@ -133,7 +162,7 @@ async function svgToPngDataUrl(svgDataUrl: string): Promise<string> {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = img.width * 2; // 2x for sharpness
+      canvas.width = img.width * 2;
       canvas.height = img.height * 2;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
@@ -166,7 +195,8 @@ export default function PdfDownload({
         surfaceAreaM2: number;
       }[] = [];
 
-      let parsedGeoJSON: { type: string; features: GeoJSONFeature[] } | null = null;
+      let parsedGeoJSON: { type: string; features: GeoJSONFeature[] } | null =
+        null;
 
       try {
         const geoJSON = JSON.parse(estimate.footprintGeoJSON);
@@ -203,15 +233,22 @@ export default function PdfDownload({
         ];
       }
 
-      // Generate polygon image
+      // Generate polygon image — try satellite map first, fall back to SVG
       let polygonImageUrl: string | null = null;
-      if (parsedGeoJSON) {
-        const svgUrl = generatePolygonPngDataUrl(parsedGeoJSON, zones);
+      polygonImageUrl = await fetchSatelliteMapImage(
+        estimate.latitude,
+        estimate.longitude,
+        estimate.footprintGeoJSON
+      );
+
+      // Fallback to simple SVG diagram if satellite map isn't available
+      if (!polygonImageUrl && parsedGeoJSON) {
+        const svgUrl = generateFallbackSvg(parsedGeoJSON, zones);
         if (svgUrl) {
           try {
             polygonImageUrl = await svgToPngDataUrl(svgUrl);
           } catch {
-            polygonImageUrl = svgUrl; // fallback to SVG
+            polygonImageUrl = svgUrl;
           }
         }
       }
@@ -241,7 +278,10 @@ export default function PdfDownload({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const shortAddr = estimate.address.split(",")[0].trim().replace(/\s+/g, "-");
+      const shortAddr = estimate.address
+        .split(",")[0]
+        .trim()
+        .replace(/\s+/g, "-");
       a.download = `Roofactor-Quote-${shortAddr}-${new Date(estimate.createdAt).toISOString().split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
