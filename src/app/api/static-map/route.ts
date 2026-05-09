@@ -10,7 +10,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
-  const geojson = searchParams.get("geojson");
 
   if (!lat || !lng) {
     return NextResponse.json(
@@ -27,34 +26,8 @@ export async function GET(req: Request) {
     );
   }
 
-  // Build polygon path parameters from GeoJSON
-  let pathParams = "";
-  if (geojson) {
-    try {
-      const geo = JSON.parse(geojson);
-      const features =
-        geo.type === "FeatureCollection"
-          ? geo.features
-          : geo.type === "Polygon"
-            ? [{ geometry: geo }]
-            : [];
-
-      for (const feature of features) {
-        if (feature.geometry?.type === "Polygon" && feature.geometry.coordinates?.[0]) {
-          const coords = feature.geometry.coordinates[0];
-          // GeoJSON is [lng, lat], Static Maps needs lat,lng
-          const points = coords
-            .map((c: number[]) => `${c[1]},${c[0]}`)
-            .join("|");
-          pathParams += `&path=fillcolor:0x22c55e40|color:0x22c55eff|weight:3|${points}`;
-        }
-      }
-    } catch {
-      // Invalid GeoJSON, skip polygon overlay
-    }
-  }
-
-  const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=640x480&scale=2&maptype=satellite${pathParams}&key=${apiKey}`;
+  // Return plain satellite imagery — polygon overlay is drawn client-side
+  const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=640x480&scale=2&maptype=satellite&key=${apiKey}`;
 
   try {
     const res = await fetch(staticUrl);

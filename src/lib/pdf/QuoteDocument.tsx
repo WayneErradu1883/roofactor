@@ -120,9 +120,9 @@ const styles = StyleSheet.create({
     alignItems: "center" as const,
   },
   polygonImage: {
-    width: 320,
-    height: 240,
-    borderRadius: 6,
+    width: 460,
+    height: 345,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: gray200,
   },
@@ -369,8 +369,7 @@ export default function QuoteDocument({
             <View style={styles.polygonSection}>
               <Image src={polygonImageUrl} style={styles.polygonImage} />
               <Text style={styles.polygonCaption}>
-                Roof polygon outline ({zones.length} zone
-                {zones.length !== 1 ? "s" : ""})
+                Satellite view with roof polygon overlay
               </Text>
             </View>
           </View>
