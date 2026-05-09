@@ -16,32 +16,53 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const [estimates, thisMonth, totalArea] = await Promise.all([
-    prisma.estimate.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        address: true,
-        surfaceAreaM2: true,
-        totalCost: true,
-        createdAt: true,
-      },
-    }),
-    prisma.estimate.count({
-      where: {
-        userId: session.user.id,
-        createdAt: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  const monthStart = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1
+  );
+
+  const [estimates, thisMonth, totalArea, wonThisMonth, lostThisMonth] =
+    await Promise.all([
+      prisma.estimate.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          address: true,
+          surfaceAreaM2: true,
+          totalCost: true,
+          createdAt: true,
+          opportunityStatus: true,
+          opportunityReason: true,
         },
-      },
-    }),
-    prisma.estimate.aggregate({
-      where: { userId: session.user.id },
-      _sum: { surfaceAreaM2: true },
-      _count: true,
-    }),
-  ]);
+      }),
+      prisma.estimate.count({
+        where: {
+          userId: session.user.id,
+          createdAt: { gte: monthStart },
+        },
+      }),
+      prisma.estimate.aggregate({
+        where: { userId: session.user.id },
+        _sum: { surfaceAreaM2: true },
+        _count: true,
+      }),
+      prisma.estimate.count({
+        where: {
+          userId: session.user.id,
+          opportunityStatus: "WON",
+          opportunityUpdatedAt: { gte: monthStart },
+        },
+      }),
+      prisma.estimate.count({
+        where: {
+          userId: session.user.id,
+          opportunityStatus: "LOST",
+          opportunityUpdatedAt: { gte: monthStart },
+        },
+      }),
+    ]);
 
   const totalEstimates = totalArea._count;
   const totalM2 = totalArea._sum.surfaceAreaM2 ?? 0;
@@ -68,7 +89,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -97,7 +118,32 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold">
-                {totalM2.toLocaleString("en-ZA", { maximumFractionDigits: 0 })} m&sup2;
+                {totalM2.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}{" "}
+                m&sup2;
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
+                Won This Month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-700 dark:text-green-400">
+                {wonThisMonth}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-400">
+                Lost This Month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-red-700 dark:text-red-400">
+                {lostThisMonth}
               </p>
             </CardContent>
           </Card>

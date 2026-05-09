@@ -12,6 +12,12 @@ enum Role {
   ESTIMATOR
 }
 
+enum OpportunityStatus {
+  OPEN
+  WON
+  LOST
+}
+
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
@@ -52,8 +58,11 @@ model Estimate {
   totalCost        Float?
   confidenceScore  Float?
   sourcesUsed      String
-  notes            String?  @db.Text
-  userId           String
+  notes               String?            @db.Text
+  opportunityStatus   OpportunityStatus  @default(OPEN)
+  opportunityReason   String?            @db.Text
+  opportunityUpdatedAt DateTime?
+  userId              String
   user             User     @relation(fields: [userId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

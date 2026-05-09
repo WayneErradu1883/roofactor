@@ -3,6 +3,8 @@ import { prisma } from "./db";
 export type AuditAction =
   | "estimate.created"
   | "estimate.deleted"
+  | "estimate.won"
+  | "estimate.lost"
   | "user.registered"
   | "user.login"
   | "session.revoked"
