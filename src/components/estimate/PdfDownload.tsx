@@ -598,10 +598,6 @@ export default function PdfDownload({
               {sendingWA ? "Sending..." : "Send"}
             </Button>
           </div>
-          <p className="text-xs text-green-600">
-            SA numbers auto-convert (082... becomes +27 82...).
-            The PDF will be downloaded and WhatsApp Web will open with a pre-filled message.
-          </p>
           <Button
             variant="ghost"
             size="sm"

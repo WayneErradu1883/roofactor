@@ -52,7 +52,8 @@ export default function HelpPage() {
               Roofactor is a roof surface area estimation tool built for Nomiplex&apos;s roof coating and
               sealing business. It uses satellite imagery, Google Street View, and building footprint data
               from Microsoft, OpenStreetMap, and Google Solar API to help you accurately measure roof areas,
-              auto-detect pitch angles, calculate costs, and generate professional estimates.
+              auto-detect pitch angles, calculate costs, generate professional PDF quotes, and track
+              opportunities through your sales pipeline.
             </p>
           </Section>
 
@@ -65,10 +66,17 @@ export default function HelpPage() {
 
             <Step number={2} title="Search for the address">
               Type the property address in the search bar and press Enter or click Search.
-              The map will fly to the location and zoom in to satellite view. The address must be in South Africa.
+              The map will fly to the location and zoom in to satellite view. A <strong>pin marker</strong> is
+              dropped on the house so you can see exactly which property was found. The address must be in South Africa.
             </Step>
 
-            <Step number={3} title="Review building footprints and Street View">
+            <Step number={3} title="Enter customer details">
+              After the address is found, fill in the <strong>Customer Name</strong> and <strong>Phone</strong> fields.
+              These are optional but recommended &mdash; the customer name and phone appear on the dashboard
+              table under the address, making it easy to identify who each estimate is for.
+            </Step>
+
+            <Step number={4} title="Review building footprints and Street View">
               The system automatically searches for building data from three sources:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li><strong>Orange overlay</strong> &mdash; Microsoft Building Footprints (AI-detected from satellite imagery)</li>
@@ -85,7 +93,7 @@ export default function HelpPage() {
               </p>
             </Step>
 
-            <Step number={4} title="Draw the roof polygon">
+            <Step number={5} title="Draw the roof polygon">
               Use the polygon drawing tool (the pentagon icon on the top-left of the map) to trace the actual roof outline:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li>Click the pentagon icon to activate drawing mode</li>
@@ -98,7 +106,7 @@ export default function HelpPage() {
               </ul>
             </Step>
 
-            <Step number={5} title="Handle complex roofs (multiple zones)">
+            <Step number={6} title="Handle complex roofs (multiple zones)">
               For roofs with different pitch angles or sections:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li>Draw separate polygons for each roof section</li>
@@ -108,7 +116,7 @@ export default function HelpPage() {
               </ul>
             </Step>
 
-            <Step number={6} title="Set the roof pitch">
+            <Step number={7} title="Set the roof pitch">
               The pitch affects the actual surface area calculation &mdash; steeper roofs have more surface
               area than the flat footprint.
               <ul className="mt-2 list-disc space-y-1 pl-4">
@@ -128,43 +136,97 @@ export default function HelpPage() {
               </ul>
             </Step>
 
-            <Step number={7} title="Review the quote">
+            <Step number={8} title="Set the rate and review the quote">
               The quote calculator shows:
               <ul className="mt-2 list-disc space-y-1 pl-4">
                 <li><strong>Footprint area</strong> &mdash; the flat 2D area of your polygons</li>
                 <li><strong>Surface area</strong> &mdash; the actual roof area adjusted for pitch</li>
-                <li><strong>Rate per m&sup2;</strong> &mdash; adjustable cost rate (default R150/m&sup2;)</li>
+                <li><strong>Rate per m&sup2;</strong> &mdash; adjustable from R0 to R140 in steps of R5</li>
                 <li><strong>Total cost</strong> &mdash; surface area &times; rate</li>
               </ul>
-              Adjust the rate per m&sup2; to match your pricing.
             </Step>
 
-            <Step number={8} title="Add notes and save">
+            <Step number={9} title="Add notes and save">
               Add any relevant site observations in the notes field (access issues, roof condition, etc.).
               Click <strong>Save Estimate</strong> or press <strong>Ctrl+S</strong> to save.
             </Step>
           </Section>
 
-          {/* SOP 2: Viewing & Managing Estimates */}
-          <Section title="SOP 2: Viewing & Managing Estimates" description="How to review, export, and delete saved estimates">
+          {/* SOP 2: Viewing, PDF & WhatsApp */}
+          <Section title="SOP 2: Viewing, PDF & Sharing Estimates" description="How to review, export, preview, and send quotes to customers">
             <Step number={1} title="View saved estimates">
-              The dashboard shows all saved estimates in a table. Click any estimate to view its full details
-              including the map with your drawn polygons, measurements, and cost breakdown.
+              The dashboard shows all saved estimates in a table with columns for Address (with customer
+              name/phone below), Surface Area, Cost, Date, and Opportunity status. Click any estimate to
+              view its full details including the map with your drawn polygons.
             </Step>
 
-            <Step number={2} title="Export to PDF">
-              On the estimate detail page, click <strong>Download PDF</strong> to generate a professional
-              estimate document you can share with clients.
+            <Step number={2} title="Download the PDF quote">
+              On the estimate detail page, click <strong>Download PDF Quote</strong>. The PDF is named
+              using the quote number (e.g. <code>NP-QUOTE-0905-427.pdf</code>) and includes:
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Roofactor header with your company logo and name (configured in Settings)</li>
+                <li>Quote number (auto-generated as NP-QUOTE-DDMM-XXX)</li>
+                <li>Property address and GPS coordinates</li>
+                <li>Satellite image with roof polygon overlay, grid pattern, and measurement callout</li>
+                <li>Roof measurements and zone breakdown</li>
+                <li>Quote summary with total cost</li>
+                <li>Your custom Terms &amp; Conditions</li>
+              </ul>
             </Step>
 
-            <Step number={3} title="Delete an estimate">
+            <Step number={3} title="Preview the PDF">
+              Click <strong>View PDF</strong> to open the quote in a new browser tab for preview
+              before downloading or sending.
+            </Step>
+
+            <Step number={4} title="Send via WhatsApp">
+              Click <strong>WhatsApp to Customer</strong> to expand the phone input:
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Enter the customer&apos;s cell number (e.g. 082 123 4567)</li>
+                <li>SA numbers auto-convert (082... becomes +27 82...)</li>
+                <li>Click <strong>Send</strong> &mdash; the PDF downloads and WhatsApp Web opens with a pre-filled message</li>
+                <li>Attach the downloaded PDF to the WhatsApp chat</li>
+              </ul>
+            </Step>
+
+            <Step number={5} title="Delete an estimate">
               On the estimate detail page, click the <strong>Delete</strong> button. This action cannot be undone.
               Only the estimate creator or an admin can delete estimates.
             </Step>
           </Section>
 
-          {/* SOP 3: Understanding Data Sources */}
-          <Section title="SOP 3: Understanding Data Sources & Confidence" description="How accuracy and confidence scoring works">
+          {/* SOP 3: Opportunity Tracking */}
+          <Section title="SOP 3: Opportunity Tracking (Won / Lost)" description="Track which quotes convert to jobs and why">
+            <Step number={1} title="View opportunities on the dashboard">
+              The dashboard shows two rows of stat tiles:
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li><strong>Won This Month</strong> (green) &mdash; number of estimates marked as won</li>
+                <li><strong>Lost This Month</strong> (red) &mdash; number marked as lost</li>
+                <li><strong>Revenue Won This Month</strong> (green) &mdash; total ZAR value of won deals</li>
+                <li><strong>Conversion Rate</strong> &mdash; percentage of Won vs (Won + Lost) this month</li>
+                <li><strong>Pipeline Value</strong> (blue) &mdash; total ZAR value of still-open estimates</li>
+              </ul>
+            </Step>
+
+            <Step number={2} title="Mark an estimate as Won or Lost">
+              In the Opportunity column of the estimates table:
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Open estimates show <strong>Won</strong> and <strong>Lost</strong> buttons</li>
+                <li>Clicking either opens a modal asking for a reason (required)</li>
+                <li>For Won: explain why you won (e.g. &quot;Customer accepted, competitive pricing&quot;)</li>
+                <li>For Lost: explain why it was lost (e.g. &quot;Went with competitor, budget too high&quot;)</li>
+                <li>The reason is saved and visible as a tooltip when you hover the badge</li>
+              </ul>
+            </Step>
+
+            <Step number={3} title="Reopen an estimate">
+              If you accidentally marked an estimate as Won or Lost, click the small <strong>undo icon</strong> next
+              to the badge to reopen it. This sets it back to Open with the Won/Lost buttons showing again.
+            </Step>
+          </Section>
+
+          {/* SOP 4: Data Sources */}
+          <Section title="SOP 4: Understanding Data Sources & Confidence" description="How accuracy and confidence scoring works">
             <Step number={1} title="Data sources">
               Roofactor cross-references three data sources:
               <ul className="mt-2 list-disc space-y-1 pl-4">
@@ -196,8 +258,8 @@ export default function HelpPage() {
             </Step>
           </Section>
 
-          {/* SOP 4: Tips */}
-          <Section title="SOP 4: Tips for Accurate Measurements" description="Best practices for getting within 2% accuracy">
+          {/* SOP 5: Tips */}
+          <Section title="SOP 5: Tips for Accurate Measurements" description="Best practices for getting within 2% accuracy">
             <Step number={1} title="Zoom in fully">
               Always zoom to the maximum level before drawing. The closer you are, the more precisely
               you can place vertices on the roof edges.
@@ -211,7 +273,7 @@ export default function HelpPage() {
             <Step number={3} title="Use Street View to assess pitch">
               The Street View panel shows a ground-level view of the building. Use it to visually
               estimate the roof pitch before or after drawing your polygon. Compare what you see
-              with the common pitch ranges in SOP 1, Step 6.
+              with the common pitch ranges in SOP 1, Step 7.
             </Step>
 
             <Step number={4} title="Place more vertices on curves">
@@ -230,8 +292,49 @@ export default function HelpPage() {
             </Step>
           </Section>
 
-          {/* SOP 5: Profile & Account */}
-          <Section title="SOP 5: Your Profile & Account" description="Managing your profile, password, and appearance">
+          {/* SOP 6: PDF Settings */}
+          <Section title="SOP 6: PDF Quote Settings" description="Customise your PDF quotes with company branding and terms">
+            <Step number={1} title="Access settings">
+              Click <strong>Settings</strong> in the navigation bar. The PDF Quote Settings section is
+              available to all users.
+            </Step>
+
+            <Step number={2} title="Upload your company logo">
+              Under <strong>Company Branding</strong>, click <strong>Upload Logo</strong> to add your
+              company logo. Accepted formats: JPEG, PNG, or SVG (max 2MB). The logo is automatically
+              resized to fit and appears centered between the Roofactor header and the document title
+              on every PDF.
+            </Step>
+
+            <Step number={3} title="Set your company name">
+              Enter your company name (e.g. &quot;Nomiplex&quot;). This appears centered below the logo
+              on the PDF. The Roofactor branding always appears at the top and in the footer and cannot be changed.
+            </Step>
+
+            <Step number={4} title="Customise the document title">
+              Change the document title from the default &quot;QUOTATION&quot; to whatever suits your
+              business (e.g. &quot;ESTIMATE&quot;, &quot;PROPOSAL&quot;).
+            </Step>
+
+            <Step number={5} title="Edit Terms & Conditions">
+              Write your own terms and conditions in the text box. These appear in italic at the bottom
+              of every PDF. Use <code>{"{validity}"}</code> in the text to automatically insert the quote
+              validity period (e.g. &quot;valid for {"{validity}"} days&quot;).
+            </Step>
+
+            <Step number={6} title="Add contact details">
+              Enter your phone number and email address. These appear in the PDF footer so customers
+              can reach you directly.
+            </Step>
+
+            <Step number={7} title="Save settings">
+              Click <strong>Save PDF Settings</strong>. All future PDF quotes will use these values.
+              Changes apply to newly generated PDFs only &mdash; previously downloaded PDFs are not affected.
+            </Step>
+          </Section>
+
+          {/* SOP 7: Profile & Account */}
+          <Section title="SOP 7: Your Profile & Account" description="Managing your profile, password, and appearance">
             <Step number={1} title="Access your profile">
               Click your <strong>name</strong> in the top navigation bar to open your profile page.
             </Step>
@@ -253,10 +356,11 @@ export default function HelpPage() {
             </Step>
           </Section>
 
-          {/* SOP 6: Admin */}
-          <Section title="SOP 6: Admin Settings (Admin Only)" description="Session management, password resets, and usage logs">
+          {/* SOP 8: Admin */}
+          <Section title="SOP 8: Admin Settings (Admin Only)" description="Session management, password resets, and usage logs">
             <Step number={1} title="Access admin settings">
-              Click <strong>Settings</strong> in the navigation bar (visible to admin users only).
+              Click <strong>Settings</strong> in the navigation bar. Admin sections appear below the
+              PDF settings and are only visible to users with the Admin role.
             </Step>
 
             <Step number={2} title="View and revoke sessions">
@@ -276,7 +380,7 @@ export default function HelpPage() {
 
             <Step number={4} title="View usage logs">
               Click <strong>View Activity Log</strong> to see all user activity including logins,
-              estimate creation/deletion, session revocations, and password changes.
+              estimate creation/deletion, opportunity wins/losses, session revocations, and password changes.
             </Step>
           </Section>
 
