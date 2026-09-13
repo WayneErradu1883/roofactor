@@ -11,20 +11,8 @@ export function NavHeader() {
   const [open, setOpen] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const links: { href: string; label: string }[] = [
-    { href: "/", label: "Dashboard" },
-    { href: "/customers", label: "Customers" },
-    { href: "/estimate", label: "New Estimate" },
-    ...(isAdmin
-      ? [
-          { href: "/admin/estimates", label: "All Estimates" },
-          { href: "/admin/activity", label: "Activity" },
-        ]
-      : []),
-    { href: "/admin/settings", label: "Settings" },
-    { href: "/help", label: "Help" },
-    { href: "/profile", label: session?.user?.name ?? "Profile" },
-  ];
+  const linkClass =
+    "text-sm text-muted-foreground transition-colors hover:text-foreground hidden sm:inline";
 
   return (
     <header className="border-b bg-card sticky top-0 z-50">
@@ -45,12 +33,28 @@ export function NavHeader() {
         </div>
 
         {session?.user && (
-          <div className="flex items-center gap-2">
-            <Link
-              href="/customers"
-              className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline"
-            >
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/" className={linkClass}>
+              Dashboard
+            </Link>
+            <Link href="/customers" className={linkClass}>
               Customers
+            </Link>
+            {isAdmin && (
+              <>
+                <Link href="/admin/estimates" className={linkClass}>
+                  All Estimates
+                </Link>
+                <Link href="/admin/activity" className={linkClass}>
+                  Activity
+                </Link>
+              </>
+            )}
+            <Link href="/admin/settings" className={linkClass}>
+              Settings
+            </Link>
+            <Link href="/profile" className={linkClass}>
+              {session.user.name}
             </Link>
             <Button
               variant="outline"
@@ -60,11 +64,19 @@ export function NavHeader() {
             >
               ☰ Menu
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
+              Sign Out
+            </Button>
           </div>
         )}
       </div>
 
-      {/* Slide-out side menu */}
+      {/* Slide-out side menu (Help lives here; on small screens it also
+          exposes the primary links that are hidden in the top bar). */}
       {open && session?.user && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
           <div
@@ -84,26 +96,63 @@ export function NavHeader() {
               </Button>
             </div>
             <div className="flex flex-col gap-1">
-              {links.map((l) => (
-                <Link
-                  key={l.href + l.label}
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-2 text-sm hover:bg-muted"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-            <div className="mt-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => signOut({ callbackUrl: "/login" })}
+              {/* Help is the primary item here */}
+              <Link
+                href="/help"
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
               >
-                Sign Out
-              </Button>
+                Help
+              </Link>
+              {/* On phones, the top-bar links are hidden — repeat them here */}
+              <div className="mt-2 border-t pt-2 sm:hidden">
+                <Link
+                  href="/"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/customers"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  Customers
+                </Link>
+                {isAdmin && (
+                  <>
+                    <Link
+                      href="/admin/estimates"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                    >
+                      All Estimates
+                    </Link>
+                    <Link
+                      href="/admin/activity"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                    >
+                      Activity
+                    </Link>
+                  </>
+                )}
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  Settings
+                </Link>
+                <Link
+                  href="/profile"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  {session.user.name}
+                </Link>
+              </div>
             </div>
           </nav>
         </div>

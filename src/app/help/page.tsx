@@ -129,12 +129,14 @@ export default function HelpPage() {
                 <strong>Roofactor</strong> logo (click it to go to the
                 Dashboard) and a big <strong>New Estimate</strong> button.
               </Step>
-              <Step number={2} title="Open the side menu for everything else">
-                Click <strong>☰ Menu</strong> on the top-right. A panel slides in
-                from the side with links to every screen — Dashboard, Customers,
-                New Estimate, Settings, <strong>Help</strong>, your profile, and{" "}
-                <strong>Sign Out</strong>. Admins also see All Estimates and
-                Activity. This is your way to get back to any page from anywhere.
+              <Step number={2} title="The header links">
+                On a computer the top bar also shows{" "}
+                <strong>Dashboard</strong>, <strong>Customers</strong>,{" "}
+                <strong>Settings</strong>, your name (your profile) and{" "}
+                <strong>Sign Out</strong> (admins also see All Estimates and
+                Activity). Click <strong>☰ Menu</strong> for{" "}
+                <strong>Help</strong> — and on a phone, where the header links are
+                hidden, the same menu lists them all too.
               </Step>
               <Step number={3} title="“Back” links">
                 Most screens also have a <strong>Back</strong> link near the top

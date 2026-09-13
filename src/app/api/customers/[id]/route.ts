@@ -76,6 +76,8 @@ export async function PATCH(
     if (has(f)) data[f] = str(body[f]);
   }
   if (has("pinned")) data.pinned = Boolean(body.pinned);
+  // Archive / unarchive — the customer keeps its code either way.
+  if (has("archived")) data.archivedAt = body.archived ? new Date() : null;
 
   const updated = await prisma.customer.update({ where: { id }, data });
   return NextResponse.json(updated);

@@ -43,6 +43,43 @@ export default function CustomerForm({
   const set = (k: keyof CustomerData, v: string) =>
     setF((prev) => ({ ...prev, [k]: v }));
 
+  // Google Maps address validation
+  const [validating, setValidating] = useState(false);
+  const [addrStatus, setAddrStatus] = useState<"idle" | "valid" | "invalid">(
+    "idle"
+  );
+  const [addrMsg, setAddrMsg] = useState("");
+
+  async function validateAddress() {
+    if (!f.physicalAddress.trim()) return;
+    setValidating(true);
+    setAddrStatus("idle");
+    setAddrMsg("");
+    try {
+      const res = await fetch(
+        `/api/geocode?address=${encodeURIComponent(f.physicalAddress)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setAddrStatus("invalid");
+        setAddrMsg(
+          data.error === "Address not found"
+            ? "Google Maps couldn't find that address. Please check it."
+            : data.error || "Could not validate the address."
+        );
+        return;
+      }
+      // Replace with Google's official formatting so it's consistent.
+      setF((prev) => ({ ...prev, physicalAddress: data.formatted_address }));
+      setAddrStatus("valid");
+    } catch {
+      setAddrStatus("invalid");
+      setAddrMsg("Network error while validating. Please try again.");
+    } finally {
+      setValidating(false);
+    }
+  }
+
   async function save() {
     setError(null);
     setSaving(true);
@@ -111,9 +148,31 @@ export default function CustomerForm({
         <Label>Physical Address</Label>
         <textarea
           value={f.physicalAddress}
-          onChange={(e) => set("physicalAddress", e.target.value)}
+          onChange={(e) => {
+            set("physicalAddress", e.target.value);
+            setAddrStatus("idle");
+          }}
           className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={validateAddress}
+            disabled={!f.physicalAddress.trim() || validating}
+          >
+            {validating ? "Validating…" : "Validate with Google Maps"}
+          </Button>
+          {addrStatus === "valid" && (
+            <span className="text-xs font-medium text-green-600">
+              ✓ Address validated
+            </span>
+          )}
+          {addrStatus === "invalid" && (
+            <span className="text-xs text-destructive">{addrMsg}</span>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

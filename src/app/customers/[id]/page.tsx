@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import CustomerForm from "@/components/customer/CustomerForm";
+import ArchiveButton from "@/components/customer/ArchiveButton";
 
 export const dynamic = "force-dynamic";
 
@@ -66,13 +67,31 @@ export default async function CustomerDetailPage({
     <>
       <NavHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{displayName}</h2>
-          <Link href="/customers">
-            <Button variant="ghost" size="sm">
-              Back to Customers
-            </Button>
-          </Link>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {customer.customerCode && (
+              <span className="rounded bg-primary/10 px-2 py-1 font-mono text-sm text-primary">
+                {customer.customerCode}
+              </span>
+            )}
+            <h2 className="text-2xl font-bold">{displayName}</h2>
+            {customer.archivedAt && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                Archived
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ArchiveButton
+              id={customer.id}
+              archived={customer.archivedAt != null}
+            />
+            <Link href="/customers">
+              <Button variant="ghost" size="sm">
+                Back
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <Card className="mb-6">

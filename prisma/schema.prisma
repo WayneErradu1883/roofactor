@@ -34,6 +34,7 @@ model User {
 
 model Customer {
   id              String     @id @default(cuid())
+  customerCode    String?    @unique // e.g. A001 — letter from the name, then sequential
   title           String?
   name            String?
   surname         String?
@@ -42,6 +43,7 @@ model Customer {
   email           String?
   notes           String?    @db.Text // internal notes — never rendered on a quote
   pinned          Boolean    @default(false)
+  archivedAt      DateTime?  // archived customers keep their code; codes are never reused
   userId          String
   user            User       @relation(fields: [userId], references: [id])
   estimates       Estimate[]

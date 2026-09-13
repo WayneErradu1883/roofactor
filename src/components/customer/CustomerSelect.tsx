@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 
 export interface CustomerLite {
   id: string;
+  customerCode?: string | null;
   title: string | null;
   name: string | null;
   surname: string | null;
@@ -79,6 +80,7 @@ export default function CustomerSelect({
       const created = await res.json();
       onChange({
         id: created.id,
+        customerCode: created.customerCode,
         title: created.title,
         name: created.name,
         surname: created.surname,
@@ -99,7 +101,14 @@ export default function CustomerSelect({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">Customer</p>
-            <p className="font-medium">{customerLabel(value)}</p>
+            <p className="font-medium">
+              {value.customerCode && (
+                <span className="mr-2 rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
+                  {value.customerCode}
+                </span>
+              )}
+              {customerLabel(value)}
+            </p>
             {(value.telephone || value.email) && (
               <p className="text-xs text-muted-foreground">
                 {[value.telephone, value.email].filter(Boolean).join(" · ")}
@@ -134,7 +143,10 @@ export default function CustomerSelect({
               onClick={() => onChange(c)}
               className="flex w-full flex-col items-start border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted"
             >
-              <span className="text-sm font-medium">{customerLabel(c)}</span>
+              <span className="text-sm font-medium">
+                {c.customerCode ? `${c.customerCode} · ` : ""}
+                {customerLabel(c)}
+              </span>
               {(c.telephone || c.email) && (
                 <span className="text-xs text-muted-foreground">
                   {[c.telephone, c.email].filter(Boolean).join(" · ")}

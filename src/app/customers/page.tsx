@@ -15,12 +15,14 @@ export default async function CustomersPage() {
     orderBy: [{ pinned: "desc" }, { surname: "asc" }, { name: "asc" }],
     select: {
       id: true,
+      customerCode: true,
       title: true,
       name: true,
       surname: true,
       telephone: true,
       email: true,
       pinned: true,
+      archivedAt: true,
       estimates: { select: { opportunityStatus: true, createdAt: true } },
     },
   });
@@ -35,22 +37,26 @@ export default async function CustomersPage() {
     );
     return {
       id: c.id,
+      customerCode: c.customerCode,
       title: c.title,
       name: c.name,
       surname: c.surname,
       telephone: c.telephone,
       email: c.email,
       pinned: c.pinned,
+      archived: c.archivedAt != null,
       quoteCount: c.estimates.length,
       wonCount: won,
       lastQuotedAt: last ? last.toISOString() : null,
     };
   });
 
+  // Tiles reflect active (non-archived) customers.
+  const active = rows.filter((r) => !r.archived);
   const tiles = {
-    total: rows.length,
-    quoted: rows.filter((r) => r.quoteCount > 0).length,
-    won: rows.reduce((s, r) => s + r.wonCount, 0),
+    total: active.length,
+    quoted: active.filter((r) => r.quoteCount > 0).length,
+    won: active.reduce((s, r) => s + r.wonCount, 0),
   };
 
   return (

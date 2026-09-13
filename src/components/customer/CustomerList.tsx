@@ -9,12 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface Row {
   id: string;
+  customerCode: string | null;
   title: string | null;
   name: string | null;
   surname: string | null;
   telephone: string | null;
   email: string | null;
   pinned: boolean;
+  archived: boolean;
   quoteCount: number;
   wonCount: number;
   lastQuotedAt: string | null;
@@ -42,35 +44,50 @@ export default function CustomerList({
   const [items, setItems] = useState<Row[]>(rows);
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("az");
+  const [showArchived, setShowArchived] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function togglePin(id: string, pinned: boolean) {
+  const archivedCount = items.filter((c) => c.archived).length;
+
+  async function patch(id: string, body: Record<string, unknown>) {
     setBusy(id);
     try {
       const res = await fetch(`/api/customers/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pinned: !pinned }),
+        body: JSON.stringify(body),
       });
-      if (res.ok) {
-        setItems((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, pinned: !pinned } : c))
-        );
-      }
+      return res.ok;
     } finally {
       setBusy(null);
     }
   }
 
+  async function togglePin(id: string, pinned: boolean) {
+    if (await patch(id, { pinned: !pinned })) {
+      setItems((p) => p.map((c) => (c.id === id ? { ...c, pinned: !pinned } : c)));
+    }
+  }
+
+  async function toggleArchive(id: string, archived: boolean) {
+    if (await patch(id, { archived: !archived })) {
+      setItems((p) =>
+        p.map((c) =>
+          c.id === id ? { ...c, archived: !archived, pinned: false } : c
+        )
+      );
+    }
+  }
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const list = items.filter((c) =>
-      !needle
-        ? true
-        : [c.name, c.surname, c.email, c.telephone]
-            .filter(Boolean)
-            .some((v) => v!.toLowerCase().includes(needle))
-    );
+    const list = items.filter((c) => {
+      if (!showArchived && c.archived) return false;
+      if (!needle) return true;
+      return [c.customerCode, c.name, c.surname, c.email, c.telephone]
+        .filter(Boolean)
+        .some((v) => v!.toLowerCase().includes(needle));
+    });
     const cmp = (a: Row, b: Row) => {
       switch (sortBy) {
         case "za":
@@ -84,10 +101,10 @@ export default function CustomerList({
       }
     };
     return [...list].sort(cmp);
-  }, [items, q, sortBy]);
+  }, [items, q, sortBy, showArchived]);
 
-  const pinned = filtered.filter((c) => c.pinned);
-  const rest = filtered.filter((c) => !c.pinned);
+  const pinned = filtered.filter((c) => c.pinned && !c.archived);
+  const rest = filtered.filter((c) => !(c.pinned && !c.archived));
 
   const tileDefs = [
     { label: "Total Customers", value: tiles.total },
@@ -123,7 +140,7 @@ export default function CustomerList({
       {/* Filter + sort */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
-          placeholder="Filter customers…"
+          placeholder="Filter by code, name, phone or email…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="sm:max-w-xs"
@@ -138,6 +155,17 @@ export default function CustomerList({
           <option value="recent">Recently quoted</option>
           <option value="most">Most quotes</option>
         </select>
+        {archivedCount > 0 && (
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="rounded border-input"
+            />
+            Show archived ({archivedCount})
+          </label>
+        )}
       </div>
 
       {pinned.length > 0 && (
@@ -153,6 +181,7 @@ export default function CustomerList({
                 busy={busy === c.id}
                 onOpen={() => router.push(`/customers/${c.id}`)}
                 onPin={() => togglePin(c.id, c.pinned)}
+                onArchive={() => toggleArchive(c.id, c.archived)}
               />
             ))}
           </div>
@@ -167,11 +196,12 @@ export default function CustomerList({
             busy={busy === c.id}
             onOpen={() => router.push(`/customers/${c.id}`)}
             onPin={() => togglePin(c.id, c.pinned)}
+            onArchive={() => toggleArchive(c.id, c.archived)}
           />
         ))}
         {filtered.length === 0 && (
           <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No customers yet. Click “Add Customer” to capture your first one.
+            No customers to show. Click “Add Customer” to capture one.
           </p>
         )}
       </div>
@@ -184,34 +214,65 @@ function CustomerRow({
   busy,
   onOpen,
   onPin,
+  onArchive,
 }: {
   c: Row;
   busy: boolean;
   onOpen: () => void;
   onPin: () => void;
+  onArchive: () => void;
 }) {
   return (
-    <Card className="transition-colors hover:border-primary/40">
+    <Card
+      className={`transition-colors hover:border-primary/40 ${
+        c.archived ? "opacity-60" : ""
+      }`}
+    >
       <CardContent className="flex items-center justify-between gap-3 py-3">
         <button onClick={onOpen} className="flex-1 text-left">
-          <p className="font-medium">{label(c)}</p>
+          <p className="font-medium">
+            {c.customerCode && (
+              <span className="mr-2 rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
+                {c.customerCode}
+              </span>
+            )}
+            {label(c)}
+            {c.archived && (
+              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                Archived
+              </span>
+            )}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {[c.telephone, c.email].filter(Boolean).join(" · ") || "No contact details"}
+            {[c.telephone, c.email].filter(Boolean).join(" · ") ||
+              "No contact details"}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {c.quoteCount} quote{c.quoteCount !== 1 ? "s" : ""}
             {c.wonCount > 0 ? ` · ${c.wonCount} won` : ""}
           </p>
         </button>
-        <Button
-          variant={c.pinned ? "default" : "outline"}
-          size="sm"
-          onClick={onPin}
-          disabled={busy}
-          title={c.pinned ? "Unpin" : "Pin to top"}
-        >
-          {c.pinned ? "★ Pinned" : "☆ Pin"}
-        </Button>
+        <div className="flex shrink-0 flex-col gap-1">
+          {!c.archived && (
+            <Button
+              variant={c.pinned ? "default" : "outline"}
+              size="sm"
+              onClick={onPin}
+              disabled={busy}
+              title={c.pinned ? "Unpin" : "Pin to top"}
+            >
+              {c.pinned ? "★ Pinned" : "☆ Pin"}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onArchive}
+            disabled={busy}
+          >
+            {c.archived ? "Unarchive" : "Archive"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
