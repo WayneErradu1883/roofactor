@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { NavHeader } from "@/components/NavHeader";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import EstimateTable from "@/components/estimate/EstimateTable";
 import { prisma } from "@/lib/db";
-import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -116,16 +114,11 @@ export default async function DashboardPage() {
     <>
       <NavHeader />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Dashboard</h2>
-            <p className="text-muted-foreground">
-              Welcome back, {session.user.name}
-            </p>
-          </div>
-          <Link href="/estimate">
-            <Button>New Estimate</Button>
-          </Link>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Welcome back, {session.user.name}
+          </p>
         </div>
 
         {/* Row 1: Core stats */}

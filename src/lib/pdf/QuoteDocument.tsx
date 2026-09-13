@@ -68,23 +68,35 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
-  headerLeft: {},
+  headerColLeft: {
+    width: "33%",
+    alignItems: "flex-start" as const,
+    justifyContent: "center" as const,
+  },
+  headerColCenter: {
+    width: "34%",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  headerColRight: {
+    width: "33%",
+    textAlign: "right" as const,
+    alignItems: "flex-end" as const,
+  },
   brandName: {
     fontSize: 22,
     fontFamily: "Montserrat",
     fontWeight: "bold",
     color: dark,
+    textAlign: "center" as const,
   },
   brandTagline: {
     fontSize: 8,
     color: gray400,
     marginTop: 2,
-  },
-  headerRight: {
-    textAlign: "right" as const,
-    alignItems: "flex-end" as const,
+    textAlign: "center" as const,
   },
   docLabel: {
     fontSize: 18,
@@ -105,14 +117,16 @@ const styles = StyleSheet.create({
     color: gray600,
     marginTop: 2,
   },
-  headerLogo: {
-    alignItems: "center" as const,
-    marginTop: 10,
-  },
-  logoImage: {
-    maxWidth: 180,
-    maxHeight: 60,
+  companyLogoImg: {
+    height: 40,
+    maxWidth: 150,
     objectFit: "contain" as const,
+  },
+  companyNameText: {
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: gray600,
   },
 
   /* ── Sections ───────────────────────────────────── */
@@ -430,13 +444,26 @@ export default function QuoteDocument({
       <Page size="A4" style={styles.page}>
         {/* ── Header ─────────────────────────────── */}
         <View style={styles.header}>
-          {/* Row 1: Roofactor (fixed) left — Doc title right */}
+          {/* One row, three evenly balanced columns:
+              company logo (left) — Roofactor (center) — document title (right) */}
           <View style={styles.headerTop}>
-            <View style={styles.headerLeft}>
+            {/* Left: company logo (e.g. Nomiplex) */}
+            <View style={styles.headerColLeft}>
+              {b.companyLogo ? (
+                <Image src={b.companyLogo} style={styles.companyLogoImg} />
+              ) : b.companyName ? (
+                <Text style={styles.companyNameText}>{b.companyName}</Text>
+              ) : null}
+            </View>
+
+            {/* Center: Roofactor brand */}
+            <View style={styles.headerColCenter}>
               <Text style={styles.brandName}>Roofactor</Text>
               <Text style={styles.brandTagline}>{b.companyTagline}</Text>
             </View>
-            <View style={styles.headerRight}>
+
+            {/* Right: document title + meta */}
+            <View style={styles.headerColRight}>
               <Text style={styles.docLabel}>{b.documentTitle}</Text>
               {quoteNumber && (
                 <Text style={styles.quoteNumber}>{quoteNumber}</Text>
@@ -449,28 +476,6 @@ export default function QuoteDocument({
               </Text>
             </View>
           </View>
-
-          {/* Row 2: Company logo + name centered between Roofactor and doc title */}
-          {(b.companyLogo || b.companyName) && (
-            <View style={styles.headerLogo}>
-              {b.companyLogo && (
-                <Image src={b.companyLogo} style={styles.logoImage} />
-              )}
-              {b.companyName ? (
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontFamily: "Montserrat",
-    fontWeight: "bold",
-                    color: gray600,
-                    marginTop: b.companyLogo ? 4 : 0,
-                  }}
-                >
-                  {b.companyName}
-                </Text>
-              ) : null}
-            </View>
-          )}
         </View>
 
         {/* ── Property ───────────────────────────── */}

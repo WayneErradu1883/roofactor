@@ -11,10 +11,17 @@ export function NavHeader() {
   return (
     <header className="border-b bg-card sticky top-0 z-50">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold hover:opacity-80 transition-opacity">
-          <RoofIcon className="size-5 text-primary" />
-          Roofactor
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold hover:opacity-80 transition-opacity">
+            <RoofIcon className="size-5 text-primary" />
+            Roofactor
+          </Link>
+          {session?.user && (
+            <Link href="/estimate">
+              <Button size="sm">New Estimate</Button>
+            </Link>
+          )}
+        </div>
         {session?.user && (
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
