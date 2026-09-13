@@ -317,6 +317,51 @@ async function buildRoofImage(
   return canvas.toDataURL("image/png", 0.92);
 }
 
+/* ─── Rasterize an SVG logo to PNG ─────────────────────────────────
+ * react-pdf renders an SVG logo by parsing it, and SVG <text> resolves fonts
+ * by the exact family name in the file (e.g. font-family="'Montserrat-BoldItalic'").
+ * If that name isn't registered, the whole PDF render throws. Rather than chase
+ * every font name/quoting a design tool might emit, convert an SVG logo to a PNG
+ * up front so react-pdf only ever sees a raster image — no SVG font resolution.
+ * Non-SVG logos (PNG/JPG data URLs) pass through unchanged. On any failure the
+ * logo is dropped (returns null) so the PDF still generates instead of crashing.
+ */
+async function rasterizeLogo(
+  logo: string | null | undefined
+): Promise<string | null> {
+  if (!logo) return null;
+  const isSvg =
+    logo.startsWith("data:image/svg") || logo.trimStart().startsWith("<svg");
+  if (!isSvg) return logo;
+
+  try {
+    const src = logo.trimStart().startsWith("<svg")
+      ? "data:image/svg+xml;base64," +
+        btoa(unescape(encodeURIComponent(logo)))
+      : logo;
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new window.Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = src;
+    });
+
+    const scale = 3; // render crisp; the PDF displays it small
+    const w = img.naturalWidth || img.width || 300;
+    const h = img.naturalHeight || img.height || 100;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
+  } catch {
+    return null;
+  }
+}
+
 /* ─── Shared: build the PDF blob ───────────────────────────────── */
 interface PdfResult {
   blob: Blob;
@@ -385,7 +430,9 @@ async function buildPdfBlob(
       branding = {
         companyName: settings.companyName,
         companyTagline: settings.companyTagline,
-        companyLogo: settings.companyLogo,
+        // Rasterize an SVG logo to PNG so its embedded font names never reach
+        // react-pdf (they crash the render — see rasterizeLogo).
+        companyLogo: await rasterizeLogo(settings.companyLogo),
         documentTitle: settings.documentTitle,
         termsAndConditions: settings.termsAndConditions,
         footerText: settings.footerText,
