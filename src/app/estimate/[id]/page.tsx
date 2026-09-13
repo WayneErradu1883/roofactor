@@ -14,6 +14,9 @@ import {
 import PdfDownload from "@/components/estimate/PdfDownload";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { canDeleteEstimates } from "@/lib/permissions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const MapView = dynamic(() => import("@/components/map/MapView"), {
   ssr: false,
@@ -39,6 +42,16 @@ const MarkerComponent = dynamic(
   { ssr: false }
 );
 
+interface Customer {
+  id: string;
+  title: string | null;
+  name: string | null;
+  surname: string | null;
+  telephone: string | null;
+  email: string | null;
+  physicalAddress: string | null;
+}
+
 interface Estimate {
   id: string;
   address: string;
@@ -54,6 +67,19 @@ interface Estimate {
   sourcesUsed: string;
   notes: string | null;
   createdAt: string;
+  quoteNumber: string | null;
+  sentAt: string | null;
+  customerId: string | null;
+  customer: Customer | null;
+}
+
+function customerName(c: Customer): string {
+  return (
+    [c.title, c.name, c.surname].filter(Boolean).join(" ").trim() ||
+    c.email ||
+    c.telephone ||
+    "Unnamed customer"
+  );
 }
 
 interface GeoJSONFeature {
@@ -76,6 +102,10 @@ export default function EstimateDetailPage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editRate, setEditRate] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -87,6 +117,38 @@ export default function EstimateDetailPage() {
     }
     load();
   }, [params.id]);
+
+  function startEdit() {
+    if (!estimate) return;
+    setEditRate(estimate.ratePerM2 != null ? String(estimate.ratePerM2) : "");
+    setEditNotes(estimate.notes ?? "");
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    if (!estimate) return;
+    setSavingEdit(true);
+    try {
+      const rate = editRate === "" ? null : Number(editRate);
+      const total = rate != null ? rate * estimate.surfaceAreaM2 : null;
+      const res = await fetch(`/api/estimate/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          edit: true,
+          ratePerM2: rate,
+          totalCost: total,
+          notes: editNotes,
+        }),
+      });
+      if (res.ok) {
+        setEstimate(await res.json());
+        setEditing(false);
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   async function handleDelete() {
     if (!confirm("Delete this estimate? This cannot be undone.")) return;
@@ -198,8 +260,52 @@ export default function EstimateDetailPage() {
                 {estimate.latitude.toFixed(6)}, {estimate.longitude.toFixed(6)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {new Date(estimate.createdAt).toLocaleString("en-ZA")}
+                Created: {new Date(estimate.createdAt).toLocaleString("en-ZA")}
               </p>
+              {estimate.quoteNumber && (
+                <p className="text-xs text-muted-foreground">
+                  Quote: {estimate.quoteNumber}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Sent:{" "}
+                {estimate.sentAt
+                  ? new Date(estimate.sentAt).toLocaleString("en-ZA")
+                  : "not sent yet"}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                Customer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {estimate.customer ? (
+                <Link
+                  href={`/customers/${estimate.customer.id}`}
+                  className="block hover:opacity-80"
+                >
+                  <p className="font-medium">
+                    {customerName(estimate.customer)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[
+                      estimate.customer.telephone,
+                      estimate.customer.email,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "No contact details"}
+                  </p>
+                  <p className="mt-1 text-xs text-primary">View customer →</p>
+                </Link>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No customer linked.
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -254,37 +360,91 @@ export default function EstimateDetailPage() {
             </CardContent>
           </Card>
 
-          {(estimate.ratePerM2 || estimate.totalCost) && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Cost Estimate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md bg-muted p-3 space-y-1">
-                  {estimate.ratePerM2 && (
-                    <div className="flex justify-between text-sm">
-                      <span>Rate:</span>
-                      <span>R{estimate.ratePerM2.toFixed(2)} / m²</span>
-                    </div>
-                  )}
-                  {estimate.totalCost && (
-                    <div className="flex justify-between font-bold text-sm">
-                      <span>Total:</span>
-                      <span>
-                        R
-                        {estimate.totalCost.toLocaleString("en-ZA", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  )}
+          <Card>
+            <CardHeader className="flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                Cost Estimate
+              </CardTitle>
+              {!editing && (
+                <Button variant="ghost" size="sm" onClick={startEdit}>
+                  Edit
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="editRate" className="text-xs">
+                      Rate per m² (R)
+                    </Label>
+                    <Input
+                      id="editRate"
+                      type="number"
+                      value={editRate}
+                      onChange={(e) => setEditRate(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      New total:{" "}
+                      {editRate
+                        ? `R ${(
+                            Number(editRate) * estimate.surfaceAreaM2
+                          ).toLocaleString("en-ZA", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="editNotes" className="text-xs">
+                      Notes
+                    </Label>
+                    <textarea
+                      id="editNotes"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={saveEdit} disabled={savingEdit}>
+                      {savingEdit ? "Saving…" : "Save Changes"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="rounded-md bg-muted p-3 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Rate:</span>
+                    <span>
+                      {estimate.ratePerM2 != null
+                        ? `R${estimate.ratePerM2.toFixed(2)} / m²`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sm">
+                    <span>Total:</span>
+                    <span>
+                      {estimate.totalCost != null
+                        ? `R ${estimate.totalCost.toLocaleString("en-ZA", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {(confidenceLabel || sources.length > 0) && (
             <Card>
@@ -333,17 +493,27 @@ export default function EstimateDetailPage() {
           <PdfDownload
             estimate={estimate}
             estimatorName={session?.user?.name ?? "Unknown"}
+            customer={estimate.customer}
+            onSent={() =>
+              setEstimate((prev) =>
+                prev && !prev.sentAt
+                  ? { ...prev, sentAt: new Date().toISOString() }
+                  : prev
+              )
+            }
           />
 
-          <Button
-            variant="destructive"
-            size="sm"
-            className="w-full"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? "Deleting..." : "Delete Estimate"}
-          </Button>
+          {canDeleteEstimates(session?.user?.email) && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete Estimate"}
+            </Button>
+          )}
         </div>
 
         {/* Right panel: map */}

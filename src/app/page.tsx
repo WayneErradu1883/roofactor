@@ -121,6 +121,16 @@ export default async function DashboardPage() {
           </p>
         </div>
 
+        {pipelineCount > 0 && (
+          <div className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+            <span className="font-medium">Reminder:</span> you have{" "}
+            {pipelineCount} open estimate{pipelineCount !== 1 ? "s" : ""} still
+            awaiting a Won or Lost update. Please update{" "}
+            {pipelineCount !== 1 ? "them" : "it"} below so your figures stay
+            accurate.
+          </div>
+        )}
+
         {/* Row 1: Core stats */}
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           <Card>

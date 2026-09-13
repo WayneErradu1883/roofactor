@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { canDeleteEstimates } from "@/lib/permissions";
 
 export async function GET(
   _req: Request,
@@ -13,9 +14,11 @@ export async function GET(
   }
 
   const { id } = await params;
+  const isAdmin = session.user.role === "ADMIN";
 
   const estimate = await prisma.estimate.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, ...(isAdmin ? {} : { userId: session.user.id }) },
+    include: { customer: true },
   });
 
   if (!estimate) {
@@ -34,12 +37,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Deleting an estimate is restricted to a single account.
+  if (!canDeleteEstimates(session.user.email)) {
+    return NextResponse.json(
+      { error: "You do not have permission to delete estimates" },
+      { status: 403 }
+    );
+  }
+
   const { id } = await params;
-
-  const estimate = await prisma.estimate.findFirst({
-    where: { id, userId: session.user.id },
-  });
-
+  const estimate = await prisma.estimate.findUnique({ where: { id } });
   if (!estimate) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -68,7 +75,40 @@ export async function PATCH(
   }
 
   const { id } = await params;
+  const isAdmin = session.user.role === "ADMIN";
+  const scope = { id, ...(isAdmin ? {} : { userId: session.user.id }) };
   const body = await req.json();
+
+  const existing = await prisma.estimate.findFirst({ where: scope });
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Stamp the first time a quote is sent/downloaded.
+  if (body.markSent) {
+    const updated = await prisma.estimate.update({
+      where: { id },
+      data: { sentAt: existing.sentAt ?? new Date() },
+    });
+    return NextResponse.json(updated);
+  }
+
+  // Edit the estimate's editable fields.
+  if (body.edit) {
+    const num = (v: unknown) =>
+      v === null || v === undefined || v === "" ? null : Number(v);
+    const updated = await prisma.estimate.update({
+      where: { id },
+      data: {
+        ratePerM2: num(body.ratePerM2),
+        totalCost: num(body.totalCost),
+        notes: typeof body.notes === "string" ? body.notes : existing.notes,
+      },
+    });
+    return NextResponse.json(updated);
+  }
+
+  // Otherwise this is an opportunity (Won/Lost/Open) update.
   const { opportunityStatus, opportunityReason } = body;
 
   if (
@@ -81,20 +121,8 @@ export async function PATCH(
     );
   }
 
-  // Reason required for WON/LOST, not for reopening
   if (opportunityStatus !== "OPEN" && !opportunityReason?.trim()) {
-    return NextResponse.json(
-      { error: "A reason is required" },
-      { status: 400 }
-    );
-  }
-
-  const estimate = await prisma.estimate.findFirst({
-    where: { id, userId: session.user.id },
-  });
-
-  if (!estimate) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "A reason is required" }, { status: 400 });
   }
 
   const updated = await prisma.estimate.update({
@@ -109,7 +137,10 @@ export async function PATCH(
     },
   });
 
-  const actionMap: Record<string, "estimate.won" | "estimate.lost" | "estimate.reopened"> = {
+  const actionMap: Record<
+    string,
+    "estimate.won" | "estimate.lost" | "estimate.reopened"
+  > = {
     WON: "estimate.won",
     LOST: "estimate.lost",
     OPEN: "estimate.reopened",
@@ -121,8 +152,8 @@ export async function PATCH(
     entityId: id,
     details:
       opportunityStatus === "OPEN"
-        ? `${estimate.address} — Reopened`
-        : `${estimate.address} — ${opportunityReason!.trim()}`,
+        ? `${existing.address} — Reopened`
+        : `${existing.address} — ${opportunityReason!.trim()}`,
     userId: session.user.id,
     userName: session.user.name,
   });

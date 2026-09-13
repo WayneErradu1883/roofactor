@@ -26,9 +26,29 @@ model User {
   role         Role       @default(ESTIMATOR)
   profileImage String?    @db.Text
   estimates    Estimate[]
+  customers    Customer[]
   sessions     Session[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model Customer {
+  id              String     @id @default(cuid())
+  title           String?
+  name            String?
+  surname         String?
+  physicalAddress String?    @db.Text
+  telephone       String?
+  email           String?
+  notes           String?    @db.Text // internal notes — never rendered on a quote
+  pinned          Boolean    @default(false)
+  userId          String
+  user            User       @relation(fields: [userId], references: [id])
+  estimates       Estimate[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([userId])
 }
 
 model Session {
@@ -61,15 +81,20 @@ model Estimate {
   confidenceScore  Float?
   sourcesUsed      String
   notes               String?            @db.Text
+  quoteNumber         String?            // stable, issued once at save (see D-quote-number)
+  sentAt              DateTime?          // when the quote was first sent/downloaded
   opportunityStatus   OpportunityStatus  @default(OPEN)
   opportunityReason   String?            @db.Text
   opportunityUpdatedAt DateTime?
+  customerId          String?
+  customer            Customer?          @relation(fields: [customerId], references: [id])
   userId              String
   user             User     @relation(fields: [userId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([userId])
+  @@index([customerId])
 }
 
 model AuditLog {

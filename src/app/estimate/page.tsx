@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { NavHeader } from "@/components/NavHeader";
 import AddressSearch, {
@@ -11,8 +12,10 @@ import QuoteCalc from "@/components/estimate/QuoteCalc";
 import ZoneList, { type ZonePitch } from "@/components/estimate/ZoneList";
 import SourceComparison from "@/components/estimate/SourceComparison";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import CustomerSelect, {
+  type CustomerLite,
+} from "@/components/customer/CustomerSelect";
 import { calculateSurfaceArea } from "@/lib/calc/pitch";
 import type { ZoneData } from "@/components/map/PolygonEditor";
 import Link from "next/link";
@@ -76,6 +79,7 @@ const SA_ZOOM = 6;
 const BUILDING_ZOOM = 19;
 
 export default function EstimatePage() {
+  const router = useRouter();
   const [geocoded, setGeocoded] = useState<GeocodedAddress | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(SA_CENTER);
   const [mapZoom, setMapZoom] = useState(SA_ZOOM);
@@ -89,8 +93,7 @@ export default function EstimatePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [notes, setNotes] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customer, setCustomer] = useState<CustomerLite | null>(null);
   const [editorKey, setEditorKey] = useState(0);
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
   const [includeHelperInPdf, setIncludeHelperInPdf] = useState(true);
@@ -209,6 +212,7 @@ export default function EstimatePage() {
 
   async function handleSave() {
     if (!geocoded || zones.length === 0 || totals.surface === null) return;
+    if (!customer) return; // a CRM customer must be selected first
 
     setSaving(true);
     try {
@@ -255,8 +259,7 @@ export default function EstimatePage() {
                 ? 0.75
                 : 0.5,
           sourcesUsed: JSON.stringify(footprints?.sourcesAvailable || []),
-          customerName: customerName.trim() || null,
-          customerPhone: customerPhone.trim() || null,
+          customerId: customer?.id ?? null,
           notes: [
             includeHelperInPdf && helperInfo ? `--- Measurement Summary ---\n${helperInfo}` : null,
             notes || null,
@@ -266,6 +269,12 @@ export default function EstimatePage() {
 
       if (res.ok) {
         setSaved(true);
+        // Better flow: land on the estimate page to view/download the PDF.
+        const created = await res.json();
+        if (created?.id) {
+          router.push(`/estimate/${created.id}`);
+          return;
+        }
       }
     } catch {
       // handle silently
@@ -315,29 +324,7 @@ export default function EstimatePage() {
           )}
 
           {geocoded && (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label htmlFor="customerName" className="text-xs">Customer Name</Label>
-                <Input
-                  id="customerName"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Name (optional)"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="customerPhone" className="text-xs">Phone</Label>
-                <Input
-                  id="customerPhone"
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="e.g. 082 123 4567"
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
+            <CustomerSelect value={customer} onChange={setCustomer} />
           )}
 
           {footprintLoading && (
@@ -473,16 +460,21 @@ export default function EstimatePage() {
                     />
                   </div>
 
+                  {!customer && (
+                    <p className="text-xs text-amber-600">
+                      Select or add a customer above before saving.
+                    </p>
+                  )}
                   <Button
                     className="w-full"
                     onClick={handleSave}
-                    disabled={saving || saved}
+                    disabled={saving || saved || !customer}
                   >
                     {saved
-                      ? "Saved!"
+                      ? "Opening estimate…"
                       : saving
-                        ? "Saving..."
-                        : "Save Estimate"}
+                        ? "Saving & generating…"
+                        : "Save & Generate Estimate"}
                   </Button>
                 </>
               )}

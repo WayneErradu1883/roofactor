@@ -379,6 +379,9 @@ interface QuoteDocumentProps {
   createdAt: string;
   estimatorName: string;
   quoteNumber?: string;
+  customerName?: string;
+  customerContact?: string;
+  customerAddress?: string;
   polygonImageUrl?: string;
   branding?: PdfBranding;
 }
@@ -416,6 +419,9 @@ export default function QuoteDocument({
   createdAt,
   estimatorName,
   quoteNumber,
+  customerName,
+  customerContact,
+  customerAddress,
   polygonImageUrl,
   branding: brandingProp,
 }: QuoteDocumentProps) {
@@ -477,6 +483,22 @@ export default function QuoteDocument({
             </View>
           </View>
         </View>
+
+        {/* ── Prepared For (customer) ────────────── */}
+        {customerName && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Prepared For</Text>
+            <View style={styles.propertyCard}>
+              <Text style={styles.addressText}>{customerName}</Text>
+              {customerContact ? (
+                <Text style={styles.coordsText}>{customerContact}</Text>
+              ) : null}
+              {customerAddress ? (
+                <Text style={styles.coordsText}>{customerAddress}</Text>
+              ) : null}
+            </View>
+          </View>
+        )}
 
         {/* ── Property ───────────────────────────── */}
         <View style={styles.section}>

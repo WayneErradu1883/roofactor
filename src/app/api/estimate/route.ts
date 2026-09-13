@@ -23,8 +23,7 @@ export async function POST(req: Request) {
     confidenceScore,
     sourcesUsed,
     notes,
-    customerName,
-    customerPhone,
+    customerId,
   } = body;
 
   if (
@@ -42,6 +41,32 @@ export async function POST(req: Request) {
     );
   }
 
+  // A customer must be captured in the CRM first and selected here.
+  if (!customerId) {
+    return NextResponse.json(
+      { error: "Please select a customer for this estimate" },
+      { status: 400 }
+    );
+  }
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, userId: session.user.id },
+  });
+  if (!customer) {
+    return NextResponse.json({ error: "Customer not found" }, { status: 400 });
+  }
+
+  // Stable quote number, issued once at save and reused for every PDF.
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const rand = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+  const quoteNumber = `NP-QUOTE-${dd}${mm}-${rand}`;
+
+  const customerFullName = [customer.name, customer.surname]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
   const estimate = await prisma.estimate.create({
     data: {
       address,
@@ -56,8 +81,11 @@ export async function POST(req: Request) {
       confidenceScore: confidenceScore ?? null,
       sourcesUsed: sourcesUsed ?? "[]",
       notes: notes ?? null,
-      customerName: customerName ?? null,
-      customerPhone: customerPhone ?? null,
+      quoteNumber,
+      customerId: customer.id,
+      // Denormalised for display/PDF; kept in sync from the CRM record.
+      customerName: customerFullName || null,
+      customerPhone: customer.telephone ?? null,
       userId: session.user.id,
     },
   });
@@ -90,6 +118,9 @@ export async function GET() {
       totalCost: true,
       confidenceScore: true,
       createdAt: true,
+      quoteNumber: true,
+      customerName: true,
+      opportunityStatus: true,
     },
   });
 

@@ -8,8 +8,19 @@ import { Label } from "@/components/ui/label";
 import QuoteDocument, { type PdfBranding } from "@/lib/pdf/QuoteDocument";
 import { calculateSurfaceArea } from "@/lib/calc/pitch";
 
+interface PdfCustomer {
+  id: string;
+  title: string | null;
+  name: string | null;
+  surname: string | null;
+  telephone: string | null;
+  email: string | null;
+  physicalAddress: string | null;
+}
+
 interface PdfDownloadProps {
   estimate: {
+    id: string;
     address: string;
     latitude: number;
     longitude: number;
@@ -23,8 +34,11 @@ interface PdfDownloadProps {
     sourcesUsed: string;
     notes: string | null;
     createdAt: string;
+    quoteNumber: string | null;
   };
   estimatorName: string;
+  customer?: PdfCustomer | null;
+  onSent?: () => void;
 }
 
 interface GeoJSONFeature {
@@ -370,7 +384,8 @@ interface PdfResult {
 
 async function buildPdfBlob(
   estimate: PdfDownloadProps["estimate"],
-  estimatorName: string
+  estimatorName: string,
+  customer?: PdfCustomer | null
 ): Promise<PdfResult> {
   let zones: {
     zone: number;
@@ -419,7 +434,18 @@ async function buildPdfBlob(
     estimate.totalCost
   );
 
-  const quoteNumber = generateQuoteNumber();
+  // Use the stable quote number issued at save; only fall back for old records.
+  const quoteNumber = estimate.quoteNumber || generateQuoteNumber();
+
+  const customerFullName = customer
+    ? [customer.title, customer.name, customer.surname]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+    : "";
+  const customerContact = customer
+    ? [customer.telephone, customer.email].filter(Boolean).join(" · ")
+    : "";
 
   // Fetch PDF branding settings
   let branding: PdfBranding | undefined;
@@ -460,6 +486,9 @@ async function buildPdfBlob(
       createdAt={estimate.createdAt}
       estimatorName={estimatorName}
       quoteNumber={quoteNumber}
+      customerName={customerFullName || undefined}
+      customerContact={customerContact || undefined}
+      customerAddress={customer?.physicalAddress ?? undefined}
       polygonImageUrl={polygonImageUrl ?? undefined}
       branding={branding}
     />
@@ -472,6 +501,8 @@ async function buildPdfBlob(
 export default function PdfDownload({
   estimate,
   estimatorName,
+  customer,
+  onSent,
 }: PdfDownloadProps) {
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -487,10 +518,24 @@ export default function PdfDownload({
 
   const generatePdf = useCallback(async () => {
     if (cachedPdf.current) return cachedPdf.current;
-    const result = await buildPdfBlob(estimate, estimatorName);
+    const result = await buildPdfBlob(estimate, estimatorName, customer);
     cachedPdf.current = result;
     return result;
-  }, [estimate, estimatorName]);
+  }, [estimate, estimatorName, customer]);
+
+  // Record that the quote has been sent/downloaded (first time only).
+  const markSent = useCallback(async () => {
+    try {
+      await fetch(`/api/estimate/${estimate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markSent: true }),
+      });
+      onSent?.();
+    } catch {
+      /* non-critical */
+    }
+  }, [estimate.id, onSent]);
 
   // ── Download PDF ──
   async function handleDownload() {
@@ -506,6 +551,7 @@ export default function PdfDownload({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      void markSent();
     } catch (err) {
       console.error("PDF generation failed:", err);
       setError(
@@ -528,6 +574,7 @@ export default function PdfDownload({
       window.open(url, "_blank");
       // Don't revoke immediately — browser needs time to load
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      void markSent();
     } catch (err) {
       console.error("PDF preview failed:", err);
       setError(
@@ -589,6 +636,7 @@ export default function PdfDownload({
           "_blank"
         );
       }
+      void markSent();
     } catch (err) {
       console.error("WhatsApp send failed:", err);
       // The user dismissing the native share sheet throws AbortError — not a failure.

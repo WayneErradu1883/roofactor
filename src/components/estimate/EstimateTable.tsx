@@ -48,7 +48,12 @@ export default function EstimateTable({ estimates: initialEstimates }: EstimateT
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter((e) => e.address.toLowerCase().includes(q));
+      result = result.filter(
+        (e) =>
+          e.address.toLowerCase().includes(q) ||
+          (e.customerName ?? "").toLowerCase().includes(q) ||
+          (e.customerPhone ?? "").toLowerCase().includes(q)
+      );
     }
 
     result = [...result].sort((a, b) => {
@@ -260,7 +265,7 @@ export default function EstimateTable({ estimates: initialEstimates }: EstimateT
               </CardDescription>
             </div>
             <Input
-              placeholder="Search by address..."
+              placeholder="Search by address or customer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64"
