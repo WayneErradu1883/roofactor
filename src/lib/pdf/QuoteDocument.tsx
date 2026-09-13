@@ -8,13 +8,16 @@ import {
   Font,
 } from "@react-pdf/renderer";
 
-// react-pdf falls back to a default family named "Montserrat" for any glyph the
-// document font (Helvetica) lacks — e.g. accented characters in an address, or
-// the house mark once used in the header. If that family has no registered
-// bold-italic face, the whole render throws
-// "Font family not registered: 'Montserrat-BoldItalic'". Registering all four
-// faces (bundled under /public/fonts) makes the fallback resolve instead of
-// crashing. Runs once at module load — never inside a click handler.
+// The document is rendered in Montserrat (bundled under /public/fonts), NOT the
+// built-in Helvetica. Two reasons:
+//   1. react-pdf only downloads fonts the document actually references, so a
+//      registered-but-unused family is never fetched. Using Montserrat here
+//      guarantees all four faces are loaded before layout.
+//   2. react-pdf's default fallback family is itself named "Montserrat"; with a
+//      Helvetica document, any glyph Helvetica lacked fell back to an unloaded
+//      Montserrat face and threw "Font family not registered:
+//      'Montserrat-BoldItalic'", killing the whole render in production.
+// Register all four faces once at module load — never inside a click handler.
 Font.register({
   family: "Montserrat",
   fonts: [
@@ -41,7 +44,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 40,
     paddingBottom: 80,
-    fontFamily: "Helvetica",
+    fontFamily: "Montserrat",
     fontSize: 10,
     color: dark,
   },
@@ -61,7 +64,8 @@ const styles = StyleSheet.create({
   headerLeft: {},
   brandName: {
     fontSize: 22,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
   },
   brandTagline: {
@@ -75,13 +79,15 @@ const styles = StyleSheet.create({
   },
   docLabel: {
     fontSize: 18,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: green,
     letterSpacing: 2,
   },
   quoteNumber: {
     fontSize: 10,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
     marginTop: 4,
   },
@@ -106,7 +112,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
     paddingBottom: 5,
     marginBottom: 8,
@@ -124,7 +131,8 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 10,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
   },
 
@@ -138,7 +146,8 @@ const styles = StyleSheet.create({
   },
   addressText: {
     fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
   },
   coordsText: {
@@ -178,7 +187,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tableHeaderText: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     fontSize: 9,
     color: "#ffffff",
   },
@@ -236,12 +246,14 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
   },
   totalValue: {
     fontSize: 18,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: darkGreen,
   },
 
@@ -269,7 +281,8 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 8,
-    fontFamily: "Helvetica-Oblique",
+    fontFamily: "Montserrat",
+    fontStyle: "italic",
     color: gray600,
     lineHeight: 1.4,
   },
@@ -294,7 +307,8 @@ const styles = StyleSheet.create({
   },
   footerLogo: {
     fontSize: 10,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
     color: dark,
   },
   footerBrand: {
@@ -437,7 +451,8 @@ export default function QuoteDocument({
                 <Text
                   style={{
                     fontSize: 12,
-                    fontFamily: "Helvetica-Bold",
+                    fontFamily: "Montserrat",
+    fontWeight: "bold",
                     color: gray600,
                     marginTop: b.companyLogo ? 4 : 0,
                   }}
@@ -509,7 +524,7 @@ export default function QuoteDocument({
                     {z.footprintAreaM2.toFixed(1)} m²
                   </Text>
                   <Text style={styles.col3}>{z.pitchDegrees}°</Text>
-                  <Text style={[styles.col4, { fontFamily: "Helvetica-Bold" }]}>
+                  <Text style={[styles.col4, { fontFamily: "Montserrat", fontWeight: "bold" }]}>
                     {z.surfaceAreaM2.toFixed(1)} m²
                   </Text>
                 </View>
@@ -570,7 +585,8 @@ export default function QuoteDocument({
             <Text
               style={{
                 fontSize: 9,
-                fontFamily: "Helvetica-Bold",
+                fontFamily: "Montserrat",
+    fontWeight: "bold",
                 color: dark,
                 marginBottom: 4,
               }}
