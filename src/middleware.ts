@@ -17,6 +17,9 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    // `fonts` is excluded so the PDF's Montserrat faces under /public/fonts are
+    // publicly fetchable — otherwise react-pdf's font request is redirected to
+    // /login and font registration fails.
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|fonts).*)",
   ],
 };

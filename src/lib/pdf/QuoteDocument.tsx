@@ -5,7 +5,29 @@ import {
   View,
   Image,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
+
+// react-pdf falls back to a default family named "Montserrat" for any glyph the
+// document font (Helvetica) lacks — e.g. accented characters in an address, or
+// the house mark once used in the header. If that family has no registered
+// bold-italic face, the whole render throws
+// "Font family not registered: 'Montserrat-BoldItalic'". Registering all four
+// faces (bundled under /public/fonts) makes the fallback resolve instead of
+// crashing. Runs once at module load — never inside a click handler.
+Font.register({
+  family: "Montserrat",
+  fonts: [
+    { src: "/fonts/Montserrat-Regular.ttf" },
+    { src: "/fonts/Montserrat-Bold.ttf", fontWeight: "bold" },
+    { src: "/fonts/Montserrat-Italic.ttf", fontStyle: "italic" },
+    {
+      src: "/fonts/Montserrat-BoldItalic.ttf",
+      fontWeight: "bold",
+      fontStyle: "italic",
+    },
+  ],
+});
 
 const green = "#22c55e";
 const darkGreen = "#16a34a";
@@ -388,7 +410,7 @@ export default function QuoteDocument({
           {/* Row 1: Roofactor (fixed) left — Doc title right */}
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
-              <Text style={styles.brandName}>{"\u2302"} Roofactor</Text>
+              <Text style={styles.brandName}>Roofactor</Text>
               <Text style={styles.brandTagline}>{b.companyTagline}</Text>
             </View>
             <View style={styles.headerRight}>
@@ -570,7 +592,7 @@ export default function QuoteDocument({
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
             <Text style={styles.footerLogo}>
-              {"\u2302"} Roofactor
+              Roofactor
             </Text>
             <Text style={styles.footerBrand}>{b.footerText}</Text>
           </View>
