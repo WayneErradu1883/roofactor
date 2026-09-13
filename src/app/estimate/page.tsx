@@ -303,8 +303,15 @@ export default function EstimatePage() {
       <main className="flex flex-1 flex-col-reverse lg:flex-row">
         {/* Left panel: controls */}
         <div className="w-full space-y-4 overflow-y-auto border-r p-4 lg:w-[420px] lg:max-h-[calc(100vh-3.5rem)]">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">New Estimate</h2>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#7aa47c]">
+                New estimate
+              </p>
+              <h2 className="font-display text-2xl font-bold tracking-tight">
+                Trace the roof
+              </h2>
+            </div>
             <Link href="/">
               <Button variant="ghost" size="sm">
                 Back
