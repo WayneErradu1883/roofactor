@@ -431,6 +431,9 @@ export default function PdfDownload({
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sendingWA, setSendingWA] = useState(false);
+  // Surface failures to the user — a swallowed console.error makes a failed
+  // PDF look like a dead button (that hid a stale-deploy font error once).
+  const [error, setError] = useState<string | null>(null);
 
   // Keep a cached blob + quote number so View/WhatsApp can reuse it
   const cachedPdf = useRef<PdfResult | null>(null);
@@ -444,6 +447,7 @@ export default function PdfDownload({
 
   // ── Download PDF ──
   async function handleDownload() {
+    setError(null);
     setGenerating(true);
     try {
       const { blob, quoteNumber } = await generatePdf();
@@ -457,6 +461,11 @@ export default function PdfDownload({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF generation failed:", err);
+      setError(
+        `Couldn't generate the PDF: ${
+          err instanceof Error ? err.message : "unknown error"
+        }`
+      );
     } finally {
       setGenerating(false);
     }
@@ -464,6 +473,7 @@ export default function PdfDownload({
 
   // ── View PDF (preview in new tab) ──
   async function handlePreview() {
+    setError(null);
     setPreviewing(true);
     try {
       const { blob } = await generatePdf();
@@ -473,6 +483,11 @@ export default function PdfDownload({
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
       console.error("PDF preview failed:", err);
+      setError(
+        `Couldn't open the PDF preview: ${
+          err instanceof Error ? err.message : "unknown error"
+        }`
+      );
     } finally {
       setPreviewing(false);
     }
@@ -481,6 +496,7 @@ export default function PdfDownload({
   // ── WhatsApp send ──
   async function handleWhatsApp() {
     if (!phoneNumber.trim()) return;
+    setError(null);
     setSendingWA(true);
     try {
       const { blob, quoteNumber } = await generatePdf();
@@ -528,6 +544,14 @@ export default function PdfDownload({
       }
     } catch (err) {
       console.error("WhatsApp send failed:", err);
+      // The user dismissing the native share sheet throws AbortError — not a failure.
+      if (!(err instanceof Error && err.name === "AbortError")) {
+        setError(
+          `Couldn't prepare the PDF to send: ${
+            err instanceof Error ? err.message : "unknown error"
+          }`
+        );
+      }
     } finally {
       setSendingWA(false);
     }
@@ -535,6 +559,16 @@ export default function PdfDownload({
 
   return (
     <div className="space-y-2">
+      {/* Error banner — never let a PDF failure look like a dead button */}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
       {/* Download PDF */}
       <Button
         variant="outline"
