@@ -107,7 +107,7 @@ export default function SourceComparison({
             <div
               className={`rounded-md border p-3 transition-colors ${
                 showOSM
-                  ? "border-blue-300 bg-blue-50"
+                  ? "border-primary/40 bg-primary/5"
                   : "border-muted opacity-50"
               }`}
             >

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { RoofIcon } from "@/components/RoofIcon";
+import { BrandLogo } from "@/components/BrandLogo";
 import Link from "next/link";
 
 export function NavHeader() {
@@ -20,10 +20,12 @@ export function NavHeader() {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center gap-2 text-lg font-bold hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
-            <RoofIcon className="size-5 text-primary" />
-            Roofactor
+            <BrandLogo className="size-8 rounded-[9px]" iconSize={17} />
+            <span className="font-display text-lg font-extrabold tracking-tight text-foreground">
+              Roofactor
+            </span>
           </Link>
           {session?.user && (
             <Link href="/estimate">

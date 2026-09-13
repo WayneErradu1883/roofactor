@@ -221,17 +221,17 @@ export default async function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+          <Card className="border-teal-200 bg-teal-50/50 dark:border-teal-900 dark:bg-teal-950/20">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">
+              <CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-400">
                 Pipeline Value
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+              <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">
                 {formatZAR(pipelineAmount)}
               </p>
-              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+              <p className="text-xs text-teal-600/70 dark:text-teal-400/70 mt-1">
                 {pipelineCount} open estimate{pipelineCount !== 1 ? "s" : ""}
               </p>
             </CardContent>

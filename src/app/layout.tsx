@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Instrument_Sans, Bricolage_Grotesque } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import KeyboardHelp from "@/components/KeyboardHelp";
+import { AppFooter } from "@/components/AppFooter";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body / UI font
+const instrumentSans = Instrument_Sans({
+  variable: "--font-sans-var",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Display / heading font
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-display-var",
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -33,11 +38,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${instrumentSans.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>
           {children}
+          <AppFooter />
           <KeyboardHelp />
         </Providers>
       </body>

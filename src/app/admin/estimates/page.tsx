@@ -150,7 +150,7 @@ export default function AdminEstimatesPage() {
       );
     }
     return (
-      <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
         Open
       </span>
     );
@@ -210,11 +210,11 @@ export default function AdminEstimatesPage() {
                     <CardHeader><CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">Revenue Won This Month</CardTitle></CardHeader>
                     <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatZAR(stats.revenueWon)}</p></CardContent>
                   </Card>
-                  <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
-                    <CardHeader><CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400">Pipeline Value</CardTitle></CardHeader>
+                  <Card className="border-teal-200 bg-teal-50/50 dark:border-teal-900 dark:bg-teal-950/20">
+                    <CardHeader><CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-400">Pipeline Value</CardTitle></CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{formatZAR(stats.pipelineValue)}</p>
-                      <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">{stats.pipelineCount} open estimate{stats.pipelineCount !== 1 ? "s" : ""}</p>
+                      <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">{formatZAR(stats.pipelineValue)}</p>
+                      <p className="text-xs text-teal-600/70 dark:text-teal-400/70 mt-1">{stats.pipelineCount} open estimate{stats.pipelineCount !== 1 ? "s" : ""}</p>
                     </CardContent>
                   </Card>
                 </div>

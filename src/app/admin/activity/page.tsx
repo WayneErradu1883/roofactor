@@ -35,11 +35,11 @@ const actionLabels: Record<string, string> = {
 const actionColors: Record<string, string> = {
   "estimate.created": "bg-green-100 text-green-800",
   "estimate.deleted": "bg-red-100 text-red-800",
-  "user.registered": "bg-blue-100 text-blue-800",
+  "user.registered": "bg-teal-100 text-teal-800",
   "user.login": "bg-gray-100 text-gray-800",
   "session.revoked": "bg-orange-100 text-orange-800",
   "session.limit_exceeded": "bg-yellow-100 text-yellow-800",
-  "user.password_changed": "bg-purple-100 text-purple-800",
+  "user.password_changed": "bg-slate-100 text-slate-800",
 };
 
 export default function ActivityPage() {
