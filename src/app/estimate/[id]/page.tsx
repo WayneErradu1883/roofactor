@@ -534,7 +534,7 @@ export default function EstimateDetailPage() {
                 coordinates={p.coordinates}
                 source={`Zone ${p.zone}`}
                 areaM2={p.area}
-                color="#22c55e"
+                color="#0a7b29"
                 visible={true}
               />
             ))}

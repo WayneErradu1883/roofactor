@@ -41,8 +41,8 @@ for (const face of ["Regular", "Bold", "Italic", "BoldItalic"] as const) {
   });
 }
 
-const green = "#22c55e";
-const darkGreen = "#16a34a";
+const green = "#0a7b29";
+const darkGreen = "#14963a";
 const dark = "#111827";
 const gray600 = "#4b5563";
 const gray400 = "#9ca3af";

@@ -36,7 +36,7 @@ export default function PolygonEditor({
   onZonesChange,
   initialPolygon,
   sourceLabel,
-  color = "#22c55e",
+  color = "#0a7b29",
 }: PolygonEditorProps) {
   const map = useMap();
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
