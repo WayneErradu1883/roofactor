@@ -8,16 +8,12 @@ import {
   Font,
 } from "@react-pdf/renderer";
 
-// The document is rendered in Montserrat (bundled under /public/fonts), NOT the
-// built-in Helvetica. Two reasons:
-//   1. react-pdf only downloads fonts the document actually references, so a
-//      registered-but-unused family is never fetched. Using Montserrat here
-//      guarantees all four faces are loaded before layout.
-//   2. react-pdf's default fallback family is itself named "Montserrat"; with a
-//      Helvetica document, any glyph Helvetica lacked fell back to an unloaded
-//      Montserrat face and threw "Font family not registered:
-//      'Montserrat-BoldItalic'", killing the whole render in production.
-// Register all four faces once at module load — never inside a click handler.
+// Fonts are bundled under /public/fonts and registered once at module load
+// (never inside a click handler). Two registrations are needed:
+//
+// 1. The "Montserrat" family (weight/style faces) — used to render the document
+//    body. react-pdf only downloads fonts the document references, so rendering
+//    the body in Montserrat guarantees these faces are loaded before layout.
 Font.register({
   family: "Montserrat",
   fonts: [
@@ -31,6 +27,19 @@ Font.register({
     },
   ],
 });
+
+// 2. The same faces under their PostScript names. The company logo is an SVG
+//    whose text sets font-family to PostScript names like "Montserrat-BoldItalic".
+//    react-pdf resolves those as literal family names, so without these it throws
+//    "Font family not registered: 'Montserrat-BoldItalic'" while rendering the
+//    logo and aborts the entire PDF. (Verified: this exact registration is what
+//    stops the crash.)
+for (const face of ["Regular", "Bold", "Italic", "BoldItalic"] as const) {
+  Font.register({
+    family: `Montserrat-${face}`,
+    fonts: [{ src: `/fonts/Montserrat-${face}.ttf` }],
+  });
+}
 
 const green = "#22c55e";
 const darkGreen = "#16a34a";
