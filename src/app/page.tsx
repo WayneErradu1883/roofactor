@@ -29,8 +29,8 @@ export default async function DashboardPage() {
     revenueWon,
     pipelineValue,
   ] = await Promise.all([
+    // Estimates are shared company-wide — stats reflect the whole company.
     prisma.estimate.findMany({
-      where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -46,25 +46,21 @@ export default async function DashboardPage() {
     }),
     prisma.estimate.count({
       where: {
-        userId: session.user.id,
         createdAt: { gte: monthStart },
       },
     }),
     prisma.estimate.aggregate({
-      where: { userId: session.user.id },
       _sum: { surfaceAreaM2: true },
       _count: true,
     }),
     prisma.estimate.count({
       where: {
-        userId: session.user.id,
         opportunityStatus: "WON",
         opportunityUpdatedAt: { gte: monthStart },
       },
     }),
     prisma.estimate.count({
       where: {
-        userId: session.user.id,
         opportunityStatus: "LOST",
         opportunityUpdatedAt: { gte: monthStart },
       },
@@ -72,7 +68,6 @@ export default async function DashboardPage() {
     // Revenue won this month
     prisma.estimate.aggregate({
       where: {
-        userId: session.user.id,
         opportunityStatus: "WON",
         opportunityUpdatedAt: { gte: monthStart },
       },
@@ -81,7 +76,6 @@ export default async function DashboardPage() {
     // Pipeline value (open estimates)
     prisma.estimate.aggregate({
       where: {
-        userId: session.user.id,
         opportunityStatus: "OPEN",
       },
       _sum: { totalCost: true },

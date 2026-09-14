@@ -35,7 +35,7 @@ export default async function CustomerDetailPage({
   const { id } = await params;
 
   const customer = await prisma.customer.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id },
     include: {
       estimates: {
         orderBy: { createdAt: "desc" },

@@ -11,7 +11,7 @@ export default async function CustomersPage() {
   if (!session) redirect("/login");
 
   const customers = await prisma.customer.findMany({
-    where: { userId: session.user.id },
+    // Shared company-wide customer list.
     orderBy: [{ pinned: "desc" }, { surname: "asc" }, { name: "asc" }],
     select: {
       id: true,

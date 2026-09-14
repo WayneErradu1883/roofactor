@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   const customers = await prisma.customer.findMany({
     where: {
-      userId: session.user.id,
+      // Customers are shared company-wide — not filtered by user.
       archivedAt: null, // archived customers aren't offered for new quotes
       ...(q
         ? {

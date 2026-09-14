@@ -48,8 +48,8 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  const customer = await prisma.customer.findFirst({
-    where: { id: customerId, userId: session.user.id },
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
   });
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 400 });
@@ -109,7 +109,7 @@ export async function GET() {
   }
 
   const estimates = await prisma.estimate.findMany({
-    where: { userId: session.user.id },
+    // Estimates are shared company-wide.
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

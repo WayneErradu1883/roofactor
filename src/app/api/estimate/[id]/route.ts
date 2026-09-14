@@ -14,10 +14,10 @@ export async function GET(
   }
 
   const { id } = await params;
-  const isAdmin = session.user.role === "ADMIN";
 
-  const estimate = await prisma.estimate.findFirst({
-    where: { id, ...(isAdmin ? {} : { userId: session.user.id }) },
+  // Estimates are shared company-wide.
+  const estimate = await prisma.estimate.findUnique({
+    where: { id },
     include: { customer: true },
   });
 
@@ -75,11 +75,10 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const isAdmin = session.user.role === "ADMIN";
-  const scope = { id, ...(isAdmin ? {} : { userId: session.user.id }) };
   const body = await req.json();
 
-  const existing = await prisma.estimate.findFirst({ where: scope });
+  // Estimates are shared company-wide — any signed-in user may update them.
+  const existing = await prisma.estimate.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

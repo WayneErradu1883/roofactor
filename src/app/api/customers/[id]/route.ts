@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-async function ownedCustomer(id: string, userId: string) {
-  return prisma.customer.findFirst({ where: { id, userId } });
+// Customers are shared company-wide, so any signed-in user may open/edit them.
+async function ownedCustomer(id: string) {
+  return prisma.customer.findUnique({ where: { id } });
 }
 
 // GET /api/customers/[id] — customer + the estimates (quotes) linked to them.
@@ -18,7 +19,7 @@ export async function GET(
   const { id } = await params;
 
   const customer = await prisma.customer.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id },
     include: {
       estimates: {
         orderBy: { createdAt: "desc" },
@@ -52,7 +53,7 @@ export async function PATCH(
   }
   const { id } = await params;
 
-  const existing = await ownedCustomer(id, session.user.id);
+  const existing = await ownedCustomer(id);
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
